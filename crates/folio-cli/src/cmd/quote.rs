@@ -93,6 +93,7 @@ async fn new(args: QuoteNewArgs) -> Result<()> {
     let root = find_root(&cwd).ok_or_else(|| eyre::eyre!("No folio.toml found"))?;
     let config = load_config(&root)?;
     let store = FilesystemStore::with_paths(&root, config.paths().clone());
+    let theme = crate::theme::default_theme();
 
     // Client selection
     let client_slug = if let Some(c) = args.client {
@@ -113,7 +114,7 @@ async fn new(args: QuoteNewArgs) -> Result<()> {
             );
         }
         let names: Vec<&str> = clients.iter().map(|c| c.slug.as_str()).collect();
-        let idx = Select::new()
+        let idx = Select::with_theme(&theme)
             .with_prompt("Client")
             .items(&names)
             .interact()?;
@@ -125,7 +126,7 @@ async fn new(args: QuoteNewArgs) -> Result<()> {
         d
     } else {
         let today = Local::now().format("%Y-%m-%d").to_string();
-        Input::new()
+        Input::with_theme(&theme)
             .with_prompt("Quote date")
             .default(today)
             .interact_text()?
@@ -148,7 +149,7 @@ async fn new(args: QuoteNewArgs) -> Result<()> {
     // Line items
     let mut items = Vec::new();
     loop {
-        let desc: String = Input::new()
+        let desc: String = Input::with_theme(&theme)
             .with_prompt("Item description (empty to finish)")
             .allow_empty(true)
             .interact_text()?;
@@ -156,17 +157,19 @@ async fn new(args: QuoteNewArgs) -> Result<()> {
             break;
         }
 
-        let qty_str: String = Input::new()
+        let qty_str: String = Input::with_theme(&theme)
             .with_prompt("Quantity")
             .default("1.0".to_string())
             .interact_text()?;
         let quantity = Decimal::from_str(&qty_str)
             .map_err(|_| eyre::eyre!("invalid quantity {:?}", qty_str))?;
-        let unit: String = Input::new()
+        let unit: String = Input::with_theme(&theme)
             .with_prompt("Unit (e.g. hours, project)")
             .default("hours".to_string())
             .interact_text()?;
-        let rate_str: String = Input::new().with_prompt("Rate").interact_text()?;
+        let rate_str: String = Input::with_theme(&theme)
+            .with_prompt("Rate")
+            .interact_text()?;
         let rate =
             Decimal::from_str(&rate_str).map_err(|_| eyre::eyre!("invalid rate {:?}", rate_str))?;
 

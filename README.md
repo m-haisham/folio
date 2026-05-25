@@ -296,23 +296,6 @@ Writes `folio.toml`, `.gitignore`, and a detailed `README.md`, then runs `git in
 
 ---
 
-### `folio invoice`
-
-All invoice operations as a first-class subcommand group. Mirrors `folio quote` exactly.
-
-```sh
-folio invoice new
-folio invoice list
-folio invoice build INV-2026-001
-folio invoice send  INV-2026-001
-folio invoice paid  INV-2026-001
-folio invoice void  INV-2026-001
-folio invoice preview INV-2026-001
-folio invoice summary
-```
-
----
-
 ### `folio new`
 
 Create a new document interactively. Prompts for document type when `--type` is not given.
@@ -502,6 +485,23 @@ folio quote list --status accepted
 ```
 
 `folio quote accept --convert` creates a new invoice from the quote's line items, writes the invoice ID into `[accepted].invoice_id`, and saves both files.
+
+---
+
+### `folio invoice`
+
+All invoice subcommands available under a single namespace — useful when you want to be explicit or script against a specific document type.
+
+```sh
+folio invoice new
+folio invoice list
+folio invoice build INV-2026-001
+folio invoice send  INV-2026-001
+folio invoice paid  INV-2026-001
+folio invoice void  INV-2026-001
+folio invoice preview INV-2026-001
+folio invoice summary
+```
 
 ---
 

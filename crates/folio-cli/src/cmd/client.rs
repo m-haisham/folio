@@ -4,7 +4,7 @@
 
 use clap::{Args, Subcommand};
 use colored::Colorize;
-use dialoguer::Input;
+use dialoguer::{Input, theme::ColorfulTheme};
 use eyre::Result;
 use folio_core::{
     config::{find_root, load_config},
@@ -179,7 +179,11 @@ async fn show(args: ClientShowArgs) -> Result<()> {
 /// Returns the slug of the newly created client.
 pub(crate) async fn create_client_interactive(store: &FilesystemStore) -> Result<String> {
     println!();
-    let name: String = Input::new().with_prompt("Client name").interact_text()?;
+    let theme = crate::theme::default_theme();
+
+    let name: String = Input::with_theme(&theme)
+        .with_prompt("Client name")
+        .interact_text()?;
 
     let default_slug = name
         .to_lowercase()
@@ -187,23 +191,25 @@ pub(crate) async fn create_client_interactive(store: &FilesystemStore) -> Result
         .collect::<Vec<_>>()
         .join("-");
 
-    let slug: String = Input::new()
+    let slug: String = Input::with_theme(&theme)
         .with_prompt("Client slug (used as filename)")
         .default(default_slug)
         .interact_text()?;
 
-    let contact: String = Input::new()
+    let contact: String = Input::with_theme(&theme)
         .with_prompt("Contact name")
         .allow_empty(true)
         .interact_text()?;
 
-    let email: String = Input::new().with_prompt("Billing email").interact_text()?;
+    let email: String = Input::with_theme(&theme)
+        .with_prompt("Billing email")
+        .interact_text()?;
 
-    let addr1: String = Input::new()
+    let addr1: String = Input::with_theme(&theme)
         .with_prompt("Address line 1")
         .allow_empty(true)
         .interact_text()?;
-    let addr2: String = Input::new()
+    let addr2: String = Input::with_theme(&theme)
         .with_prompt("Address line 2")
         .allow_empty(true)
         .interact_text()?;

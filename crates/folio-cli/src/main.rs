@@ -17,6 +17,7 @@
 //! ```
 
 mod cmd;
+mod theme;
 
 use clap::{Parser, Subcommand};
 

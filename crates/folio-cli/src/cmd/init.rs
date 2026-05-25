@@ -40,23 +40,31 @@ pub async fn run(args: InitArgs) -> Result<()> {
 
     println!("Initializing folio repository...\n");
 
+    let theme = crate::theme::default_theme();
+
     let name: String = if let Some(n) = args.name {
         n
     } else {
-        Input::new().with_prompt("Your name").interact_text()?
+        Input::with_theme(&theme)
+            .with_prompt("Your name")
+            .interact_text()?
     };
 
     let company: String = if let Some(c) = args.company {
         c
     } else {
-        Input::new()
+        Input::with_theme(&theme)
             .with_prompt("Company / domain")
             .interact_text()?
     };
 
-    let email: String = Input::new().with_prompt("Email").interact_text()?;
-    let address_line1: String = Input::new().with_prompt("Address line 1").interact_text()?;
-    let address_line2: String = Input::new()
+    let email: String = Input::with_theme(&theme)
+        .with_prompt("Email")
+        .interact_text()?;
+    let address_line1: String = Input::with_theme(&theme)
+        .with_prompt("Address line 1")
+        .interact_text()?;
+    let address_line2: String = Input::with_theme(&theme)
         .with_prompt("Address line 2 (city, country)")
         .interact_text()?;
 

@@ -58,13 +58,14 @@ pub async fn run(args: NewArgs) -> Result<()> {
     let root = find_root(&cwd).ok_or_else(|| eyre::eyre!("No folio.toml found"))?;
     let config = load_config(&root)?;
     let store = FilesystemStore::with_paths(&root, config.paths().clone());
+    let theme = crate::theme::default_theme();
 
     // ── Document type ─────────────────────────────────────────────────────
     let doc_type = if let Some(ref t) = args.doc_type {
         t.clone()
     } else {
         let choices = &["invoice", "quote"];
-        let idx = Select::new()
+        let idx = Select::with_theme(&theme)
             .with_prompt("Document type")
             .items(choices)
             .interact()?;
@@ -87,7 +88,7 @@ pub async fn run(args: NewArgs) -> Result<()> {
         if clients.is_empty() {
             // Offer to create a client inline rather than bailing.
             eprintln!("No clients found in {}.", store.clients_dir().display());
-            let create = Confirm::new()
+            let create = Confirm::with_theme(&theme)
                 .with_prompt("Create a client now?")
                 .default(true)
                 .interact()?;
@@ -100,7 +101,7 @@ pub async fn run(args: NewArgs) -> Result<()> {
             crate::cmd::client::create_client_interactive(&store).await?
         } else {
             let names: Vec<&str> = clients.iter().map(|c| c.slug.as_str()).collect();
-            let idx = Select::new()
+            let idx = Select::with_theme(&theme)
                 .with_prompt("Client")
                 .items(&names)
                 .interact()?;
@@ -118,7 +119,7 @@ pub async fn run(args: NewArgs) -> Result<()> {
         } else {
             "Invoice date"
         };
-        Input::new()
+        Input::with_theme(&theme)
             .with_prompt(prompt)
             .default(today)
             .interact_text()?
@@ -159,7 +160,7 @@ pub async fn run(args: NewArgs) -> Result<()> {
     // ── Line items — loop until the user submits an empty description ─────
     let mut items = Vec::new();
     loop {
-        let desc: String = Input::new()
+        let desc: String = Input::with_theme(&theme)
             .with_prompt("Item description (empty to finish)")
             .allow_empty(true)
             .interact_text()?;
@@ -167,19 +168,21 @@ pub async fn run(args: NewArgs) -> Result<()> {
             break;
         }
 
-        let qty_str: String = Input::new()
+        let qty_str: String = Input::with_theme(&theme)
             .with_prompt("Quantity")
             .default("1.0".to_string())
             .interact_text()?;
         let quantity: Decimal = Decimal::from_str(&qty_str)
             .map_err(|_| eyre::eyre!("invalid quantity {:?}", qty_str))?;
 
-        let unit: String = Input::new()
+        let unit: String = Input::with_theme(&theme)
             .with_prompt("Unit (e.g. hours, project)")
             .default("hours".to_string())
             .interact_text()?;
 
-        let rate_str: String = Input::new().with_prompt("Rate").interact_text()?;
+        let rate_str: String = Input::with_theme(&theme)
+            .with_prompt("Rate")
+            .interact_text()?;
         let rate: Decimal =
             Decimal::from_str(&rate_str).map_err(|_| eyre::eyre!("invalid rate {:?}", rate_str))?;
 

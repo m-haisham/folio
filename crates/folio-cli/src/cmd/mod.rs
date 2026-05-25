@@ -7,4 +7,5 @@ pub mod preview;
 pub mod send;
 pub mod summary;
 pub mod templates;
+pub mod update;
 pub mod void;

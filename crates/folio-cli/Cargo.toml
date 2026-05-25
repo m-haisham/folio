@@ -24,3 +24,4 @@ toml = "0.8"
 serde = { version = "1", features = ["derive"] }
 open = "5"
 tempfile = "3"
+axoupdater = "0.10"

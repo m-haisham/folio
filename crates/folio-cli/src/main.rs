@@ -59,6 +59,8 @@ enum Commands {
     Preview(cmd::preview::PreviewArgs),
     /// List available templates, or export a bundled one for customisation.
     Templates(cmd::templates::TemplatesArgs),
+    /// Update folio to the latest release.
+    Update(cmd::update::UpdateArgs),
 }
 
 #[tokio::main]
@@ -78,6 +80,7 @@ async fn main() {
         Commands::Summary(args) => cmd::summary::run(args).await,
         Commands::Preview(args) => cmd::preview::run(args).await,
         Commands::Templates(args) => cmd::templates::run(args).await,
+        Commands::Update(args) => cmd::update::run(args).await,
     };
 
     if let Err(err) = result {

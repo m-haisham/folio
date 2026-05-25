@@ -1,11 +1,325 @@
-Dear {% if client.contact %}{{ client.contact }}{% else %}there{% endif %},
+<!doctype html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{{ document_type }} {{ invoice.id }}</title>
+    </head>
+    <body style="margin: 0; padding: 0; background: #ede9df" bgcolor="#ede9df">
+        <table
+            role="presentation"
+            cellspacing="0"
+            cellpadding="0"
+            border="0"
+            width="100%"
+            bgcolor="#ede9df"
+            style="background: #ede9df"
+        >
+            <tr>
+                <td align="center" style="padding: 32px 16px">
+                    <table
+                        role="presentation"
+                        cellspacing="0"
+                        cellpadding="0"
+                        border="0"
+                        width="600"
+                        bgcolor="#fcfaf8"
+                        style="
+                            max-width: 600px;
+                            width: 100%;
+                            background: #fcfaf8;
+                            border-radius: 2px;
+                            overflow: hidden;
+                        "
+                    >
+                        <!-- Deep green header -->
+                        <tr>
+                            <td
+                                bgcolor="{% if theme %}{{ theme.primary }}{% else %}#1c3325{% endif %}"
+                                style="background:{% if theme %}{{ theme.primary }}{% else %}#1c3325{% endif %};padding:32px 40px 28px;"
+                            >
+                                <div
+                                    style="
+                                        font-family:
+                                            Georgia,
+                                            &quot;Times New Roman&quot;, serif;
+                                        font-size: 22px;
+                                        font-weight: 500;
+                                        color: #fcfaf8;
+                                        letter-spacing: 0.01em;
+                                    "
+                                >
+                                    {{ me.name }}
+                                </div>
+                                {% if me.company %}
+                                <div
+                                    style="
+                                        font-family:
+                                            Georgia,
+                                            &quot;Times New Roman&quot;, serif;
+                                        font-size: 12px;
+                                        color: rgba(252, 250, 248, 0.5);
+                                        font-style: italic;
+                                        margin-top: 5px;
+                                    "
+                                >
+                                    {{ me.company }}
+                                </div>
+                                {% endif %}
+                            </td>
+                        </tr>
 
-Attached please find {{ document_type | lower }} {{ invoice.id }} for {{ invoice.currency }} {{ invoice.total }}{% if document_type == "Invoice" %}, due {{ invoice.due }}{% else %}, valid through {{ invoice.due }}{% endif %}.
-{% if invoice.notes %}
-{{ invoice.notes }}
+                        <!-- Thin rule -->
+                        <tr>
+                            <td
+                                height="1"
+                                style="
+                                    height: 1px;
+                                    font-size: 0;
+                                    line-height: 0;
+                                    background: rgba(28, 51, 37, 0.15);
+                                "
+                            >
+                                &nbsp;
+                            </td>
+                        </tr>
 
-{% endif %}With gratitude,
+                        <!-- Body -->
+                        <tr>
+                            <td style="padding: 40px 40px 36px">
+                                <p
+                                    style="
+                                        font-family:
+                                            Georgia,
+                                            &quot;Times New Roman&quot;, serif;
+                                        font-size: 15px;
+                                        color: #1c3325;
+                                        line-height: 1.85;
+                                        margin: 0 0 18px;
+                                    "
+                                >
+                                    Dear {% if client.contact %}{{
+                                    client.contact }}{% else %}there{% endif %},
+                                </p>
 
-{{ me.name }}
-{% if me.company %}{{ me.company }}
-{% endif %}{{ me.email }}
+                                <p
+                                    style="
+                                        font-family:
+                                            Georgia,
+                                            &quot;Times New Roman&quot;, serif;
+                                        font-size: 15px;
+                                        color: #2d4a38;
+                                        line-height: 1.85;
+                                        margin: 0 0 28px;
+                                    "
+                                >
+                                    Attached please find {{ document_type |
+                                    lower }} <em>{{ invoice.id }}</em> for your
+                                    review.
+                                </p>
+
+                                <!-- Info strip -->
+                                <table
+                                    role="presentation"
+                                    cellspacing="0"
+                                    cellpadding="0"
+                                    border="0"
+                                    width="100%"
+                                >
+                                    <tr>
+                                        <td
+                                            style="
+                                                border-top: 1px solid
+                                                    rgba(28, 51, 37, 0.18);
+                                                border-bottom: 1px solid
+                                                    rgba(28, 51, 37, 0.18);
+                                                padding: 14px 0;
+                                            "
+                                        >
+                                            <table
+                                                role="presentation"
+                                                cellspacing="0"
+                                                cellpadding="0"
+                                                border="0"
+                                                width="100%"
+                                            >
+                                                <tr>
+                                                    <td
+                                                        style="
+                                                            vertical-align: top;
+                                                        "
+                                                    >
+                                                        <div
+                                                            style="
+                                                                font-family:
+                                                                    Georgia,
+                                                                    &quot;Times New Roman&quot;,
+                                                                    serif;
+                                                                font-size: 10px;
+                                                                text-transform: uppercase;
+                                                                letter-spacing: 0.12em;
+                                                                color: #6b8878;
+                                                                margin-bottom: 5px;
+                                                            "
+                                                        >
+                                                            Amount
+                                                        </div>
+                                                        <div
+                                                            style="font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:500;color:{% if theme %}{{ theme.primary }}{% else %}#1c3325{% endif %};"
+                                                        >
+                                                            {{ invoice.currency
+                                                            }} {{ invoice.total
+                                                            }}
+                                                        </div>
+                                                    </td>
+                                                    <td
+                                                        align="right"
+                                                        style="
+                                                            vertical-align: top;
+                                                        "
+                                                    >
+                                                        <div
+                                                            style="
+                                                                font-family:
+                                                                    Georgia,
+                                                                    &quot;Times New Roman&quot;,
+                                                                    serif;
+                                                                font-size: 10px;
+                                                                text-transform: uppercase;
+                                                                letter-spacing: 0.12em;
+                                                                color: #6b8878;
+                                                                margin-bottom: 5px;
+                                                            "
+                                                        >
+                                                            {% if document_type
+                                                            == "Invoice" %}Due{%
+                                                            else %}Valid
+                                                            Through{% endif %}
+                                                        </div>
+                                                        <div
+                                                            style="
+                                                                font-family:
+                                                                    Georgia,
+                                                                    &quot;Times New Roman&quot;,
+                                                                    serif;
+                                                                font-size: 16px;
+                                                                font-weight: 500;
+                                                                color: #1c3325;
+                                                            "
+                                                        >
+                                                            {{ invoice.due }}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </table>
+
+                                {% if invoice.notes %}
+                                <p
+                                    style="
+                                        font-family:
+                                            Georgia,
+                                            &quot;Times New Roman&quot;, serif;
+                                        font-size: 14px;
+                                        color: #4a6b59;
+                                        line-height: 1.9;
+                                        margin: 24px 0 0;
+                                        white-space: pre-wrap;
+                                    "
+                                >
+                                    {{ invoice.notes }}
+                                </p>
+                                {% endif %}
+
+                                <!-- Signature -->
+                                <p
+                                    style="
+                                        font-family:
+                                            Georgia,
+                                            &quot;Times New Roman&quot;, serif;
+                                        font-size: 15px;
+                                        color: #2d4a38;
+                                        line-height: 1.85;
+                                        margin: 40px 0 4px;
+                                    "
+                                >
+                                    With gratitude,
+                                </p>
+                                <p
+                                    style="font-family:Georgia,'Times New Roman',serif;font-size:17px;font-style:italic;color:{% if theme %}{{ theme.primary }}{% else %}#1c3325{% endif %};margin:0 0 2px;"
+                                >
+                                    {{ me.name }}
+                                </p>
+                                {% if me.company %}
+                                <p
+                                    style="
+                                        font-family:
+                                            Georgia,
+                                            &quot;Times New Roman&quot;, serif;
+                                        font-size: 13px;
+                                        color: #6b8878;
+                                        margin: 0 0 2px;
+                                    "
+                                >
+                                    {{ me.company }}
+                                </p>
+                                {% endif %}
+                                <p
+                                    style="
+                                        font-family:
+                                            Georgia,
+                                            &quot;Times New Roman&quot;, serif;
+                                        font-size: 13px;
+                                        color: #6b8878;
+                                        margin: 0;
+                                    "
+                                >
+                                    <a
+                                        href="mailto:{{ me.email }}"
+                                        style="
+                                            color: #6b8878;
+                                            text-decoration: none;
+                                        "
+                                        >{{ me.email }}</a
+                                    >
+                                </p>
+                            </td>
+                        </tr>
+
+                        <!-- Footer -->
+                        <tr>
+                            <td
+                                bgcolor="#f8f5f0"
+                                style="
+                                    background: #f8f5f0;
+                                    border-top: 1px solid rgba(28, 51, 37, 0.1);
+                                    padding: 12px 40px;
+                                "
+                            >
+                                <p
+                                    style="
+                                        font-family:
+                                            Georgia,
+                                            &quot;Times New Roman&quot;, serif;
+                                        font-size: 10px;
+                                        color: #8aaa9a;
+                                        text-align: center;
+                                        letter-spacing: 0.07em;
+                                        text-transform: uppercase;
+                                        margin: 0;
+                                    "
+                                >
+                                    {{ me.name }}{% if me.company %} &middot; {{
+                                    me.company }}{% endif %}
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+</html>

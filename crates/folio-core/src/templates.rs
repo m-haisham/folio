@@ -326,11 +326,18 @@ pub fn render_email_body(
     document_type: &str,
 ) -> Result<String> {
     let mut tera = Tera::default();
-    tera.add_raw_template("body", template)?;
+    // Use a .html extension so Tera applies HTML auto-escaping.
+    tera.add_raw_template("body.html", template)?;
     let mut ctx = Context::new();
     ctx.insert("invoice", invoice);
     ctx.insert("client", client);
     ctx.insert("me", me);
     ctx.insert("document_type", document_type);
-    Ok(tera.render("body", &ctx)?)
+    // Inject theme palette if primary_color is set, matching render_invoice_html.
+    if let Some(color) = invoice.get("primary_color").and_then(|v| v.as_str()) {
+        if let Some(theme) = build_theme(color) {
+            ctx.insert("theme", &theme);
+        }
+    }
+    Ok(tera.render("body.html", &ctx)?)
 }

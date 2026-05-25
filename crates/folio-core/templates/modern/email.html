@@ -1,9 +1,85 @@
-Hey {% if client.contact %}{{ client.contact }}{% else %}there{% endif %},
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ document_type }} {{ invoice.id }}</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f5f7;" bgcolor="#f4f5f7">
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" bgcolor="#f4f5f7" style="background:#f4f5f7;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
 
-{{ document_type }} {{ invoice.id }} is ready — {{ invoice.currency }} {{ invoice.total }}{% if document_type == "Invoice" %}, due {{ invoice.due }}{% else %}, valid until {{ invoice.due }}{% endif %}.
-{% if invoice.notes %}
-{{ invoice.notes }}
-{% endif %}
-Thanks,
-{{ me.name }}{% if me.company %} @ {{ me.company }}{% endif %}
-{{ me.email }}
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" bgcolor="#ffffff"
+          style="max-width:600px;width:100%;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.09);">
+
+          <!-- Colored header -->
+          <tr>
+            <td bgcolor="{% if theme %}{{ theme.primary }}{% else %}#7c3aed{% endif %}"
+              style="background:{% if theme %}{{ theme.primary }}{% else %}#7c3aed{% endif %};padding:32px 40px 28px;">
+              <div style="font-family:system-ui,-apple-system,Arial,sans-serif;font-size:22px;font-weight:900;color:#ffffff;letter-spacing:-0.5px;">{{ me.name }}</div>
+              {% if me.company %}<div style="font-family:system-ui,-apple-system,Arial,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;color:rgba(255,255,255,0.6);margin-top:5px;">{{ me.company }}</div>{% endif %}
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:36px 40px 40px;">
+
+              <p style="font-family:system-ui,-apple-system,Arial,sans-serif;font-size:15px;color:#1e1b4b;line-height:1.65;margin:0 0 18px;">
+                Hey {% if client.contact %}{{ client.contact }}{% else %}there{% endif %},
+              </p>
+
+              <p style="font-family:system-ui,-apple-system,Arial,sans-serif;font-size:15px;color:#374151;line-height:1.65;margin:0 0 28px;">
+                {{ document_type }} <strong style="color:#111827;">{{ invoice.id }}</strong> is ready &mdash; find it attached to this email.
+              </p>
+
+              <!-- Total box -->
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                  <td bgcolor="{% if theme %}{{ theme.primary }}{% else %}#7c3aed{% endif %}"
+                    style="background:{% if theme %}{{ theme.primary }}{% else %}#7c3aed{% endif %};border-radius:8px;padding:20px 24px;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                      <tr>
+                        <td style="vertical-align:bottom;">
+                          <div style="font-family:system-ui,-apple-system,Arial,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:rgba(255,255,255,0.65);">Total</div>
+                          <div style="font-family:system-ui,-apple-system,Arial,sans-serif;font-size:28px;font-weight:900;color:#ffffff;margin-top:5px;letter-spacing:-0.5px;">{{ invoice.currency }} {{ invoice.total }}</div>
+                        </td>
+                        <td align="right" style="vertical-align:bottom;">
+                          <div style="font-family:system-ui,-apple-system,Arial,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:rgba(255,255,255,0.65);">{% if document_type == "Invoice" %}Due{% else %}Valid Until{% endif %}</div>
+                          <div style="font-family:system-ui,-apple-system,Arial,sans-serif;font-size:16px;font-weight:700;color:#ffffff;margin-top:5px;">{{ invoice.due }}</div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              {% if invoice.notes %}
+              <div style="margin-top:24px;padding:16px 20px;background:{% if theme %}{{ theme.primary_light }}{% else %}#f5f3ff{% endif %};border-radius:6px;font-family:system-ui,-apple-system,Arial,sans-serif;font-size:13px;color:#374151;line-height:1.75;white-space:pre-wrap;">{{ invoice.notes }}</div>
+              {% endif %}
+
+              <!-- Signature -->
+              <p style="font-family:system-ui,-apple-system,Arial,sans-serif;font-size:14px;font-weight:700;color:{% if theme %}{{ theme.primary }}{% else %}#7c3aed{% endif %};margin:32px 0 2px;">
+                {{ me.name }}{% if me.company %} @ {{ me.company }}{% endif %}
+              </p>
+              <p style="font-family:system-ui,-apple-system,Arial,sans-serif;font-size:13px;color:#9ca3af;margin:0;">
+                <a href="mailto:{{ me.email }}" style="color:#9ca3af;text-decoration:none;">{{ me.email }}</a>
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- Bottom accent bar -->
+          <tr>
+            <td height="4" style="height:4px;font-size:0;line-height:0;background:{% if theme %}{{ theme.primary }}{% else %}#7c3aed{% endif %};">&nbsp;</td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

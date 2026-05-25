@@ -1,16 +1,97 @@
-Hi {% if client.contact %}{{ client.contact }}{% else %}there{% endif %},
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ document_type }} {{ invoice.id }}</title>
+</head>
+<body style="margin:0;padding:0;background:#f5ede0;" bgcolor="#f5ede0">
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" bgcolor="#f5ede0" style="background:#f5ede0;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
 
-I hope this message finds you well. Please find attached {{ document_type | lower }} {{ invoice.id }}.
-{% if document_type == "Invoice" %}
-A payment of {{ invoice.currency }} {{ invoice.total }} is due by {{ invoice.due }}.
-{% else %}
-This quote for {{ invoice.currency }} {{ invoice.total }} is valid until {{ invoice.due }}.
-{% endif %}
-{% if invoice.notes %}{{ invoice.notes }}
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" bgcolor="#fdf8f2"
+          style="max-width:600px;width:100%;background:#fdf8f2;border-radius:4px;overflow:hidden;">
 
-{% endif %}Thank you for your business.
+          <!-- Warm deep header -->
+          <tr>
+            <td bgcolor="{% if theme %}{{ theme.primary_dark }}{% else %}#7c3516{% endif %}"
+              style="background:{% if theme %}{{ theme.primary_dark }}{% else %}#7c3516{% endif %};padding:28px 40px 24px;">
+              <div style="font-family:Georgia,'Times New Roman',serif;font-size:20px;font-weight:700;color:#fdf8f2;letter-spacing:0.02em;">{{ me.name }}</div>
+              {% if me.company %}<div style="font-family:Georgia,'Times New Roman',serif;font-size:13px;color:rgba(253,248,242,0.6);font-style:italic;margin-top:4px;">{{ me.company }}</div>{% endif %}
+            </td>
+          </tr>
 
-Warm regards,
-{{ me.name }}
-{% if me.company %}{{ me.company }}
-{% endif %}{{ me.email }}
+          <!-- Warm rule -->
+          <tr>
+            <td height="3" style="height:3px;font-size:0;line-height:0;background:{% if theme %}{{ theme.primary_mid }}{% else %}#c8956c{% endif %};">&nbsp;</td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:32px 40px 28px;">
+
+              <p style="font-family:Georgia,'Times New Roman',serif;font-size:15px;color:#2d1f14;line-height:1.8;margin:0 0 18px;">
+                Dear {% if client.contact %}{{ client.contact }}{% else %}there{% endif %},
+              </p>
+
+              <p style="font-family:Georgia,'Times New Roman',serif;font-size:15px;color:#2d1f14;line-height:1.8;margin:0 0 28px;">
+                I hope this message finds you well. Please find attached {{ document_type | lower }} <strong>{{ invoice.id }}</strong>.
+              </p>
+
+              <!-- Info box -->
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                  <td bgcolor="#fdf0e0" style="background:#fdf0e0;border:1px solid {% if theme %}{{ theme.primary_mid }}{% else %}#d4a574{% endif %};border-radius:4px;padding:16px 20px;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                      <tr>
+                        <td style="vertical-align:top;">
+                          <div style="font-family:Georgia,'Times New Roman',serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:{% if theme %}{{ theme.primary_mid }}{% else %}#a0522d{% endif %};margin-bottom:5px;">Amount</div>
+                          <div style="font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:700;color:{% if theme %}{{ theme.primary }}{% else %}#7c3516{% endif %};">{{ invoice.currency }} {{ invoice.total }}</div>
+                        </td>
+                        <td align="right" style="vertical-align:top;">
+                          <div style="font-family:Georgia,'Times New Roman',serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:{% if theme %}{{ theme.primary_mid }}{% else %}#a0522d{% endif %};margin-bottom:5px;">{% if document_type == "Invoice" %}Due{% else %}Valid Until{% endif %}</div>
+                          <div style="font-family:Georgia,'Times New Roman',serif;font-size:16px;font-weight:700;color:#2d1f14;">{{ invoice.due }}</div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              {% if invoice.notes %}
+              <p style="font-family:Georgia,'Times New Roman',serif;font-size:14px;color:#6b4c2a;line-height:1.85;margin:24px 0 0;white-space:pre-wrap;">{{ invoice.notes }}</p>
+              {% endif %}
+
+              <!-- Closing -->
+              <p style="font-family:Georgia,'Times New Roman',serif;font-size:15px;color:#2d1f14;line-height:1.8;margin:36px 0 4px;">
+                Thank you for your business.
+              </p>
+              <p style="font-family:Georgia,'Times New Roman',serif;font-size:15px;color:#2d1f14;line-height:1.5;margin:0 0 2px;">
+                Warm regards,<br /><strong>{{ me.name }}</strong>
+              </p>
+              {% if me.company %}<p style="font-family:Georgia,'Times New Roman',serif;font-size:13px;color:#a0522d;margin:2px 0;">{{ me.company }}</p>{% endif %}
+              <p style="font-family:Georgia,'Times New Roman',serif;font-size:13px;color:#a0522d;margin:2px 0 0;">
+               <a href="mailto:{{ me.email }}" style="color:#a0522d;text-decoration:none;">{{ me.email }}</a>
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- Footer rule -->
+          <tr>
+            <td style="border-top:1px solid {% if theme %}{{ theme.primary_mid }}{% else %}#c8956c{% endif %};padding:12px 40px;background:#fdf8f2;">
+              <p style="font-family:Georgia,'Times New Roman',serif;font-size:10px;color:#b8875e;text-align:center;letter-spacing:0.06em;text-transform:uppercase;margin:0;">
+                {{ me.name }}{% if me.company %} &middot; {{ me.company }}{% endif %}
+              </p>
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

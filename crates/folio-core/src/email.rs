@@ -69,7 +69,7 @@ async fn send_smtp(email_cfg: &EmailConfig, config: &FolioConfig, msg: EmailMess
                 MultiPart::mixed()
                     .singlepart(
                         lettre::message::SinglePart::builder()
-                            .header(ContentType::TEXT_PLAIN)
+                            .header(ContentType::TEXT_HTML)
                             .body(msg.body.clone()),
                     )
                     .singlepart(
@@ -84,7 +84,11 @@ async fn send_smtp(email_cfg: &EmailConfig, config: &FolioConfig, msg: EmailMess
             .map_err(|e| FolioError::Other(e.to_string()))?
     } else {
         email_builder
-            .body(msg.body.clone())
+            .singlepart(
+                lettre::message::SinglePart::builder()
+                    .header(ContentType::TEXT_HTML)
+                    .body(msg.body.clone()),
+            )
             .map_err(|e| FolioError::Other(e.to_string()))?
     };
 

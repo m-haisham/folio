@@ -15,7 +15,7 @@ use dialoguer::{Confirm, Input, Select};
 use eyre::Result;
 use folio_core::{
     config::{find_root, load_config},
-    store::{FilesystemStore, InvoiceStore, QuoteStore},
+    store::{ClientStore, FilesystemStore, InvoiceStore, QuoteStore},
     types::{Invoice, InvoiceFilter, LineItem, Quote, QuoteFilter},
 };
 use rust_decimal::Decimal;

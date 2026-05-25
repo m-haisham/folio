@@ -12,7 +12,7 @@ use folio_core::{
     config::{find_root, load_config},
     index::{BuildIndex, PdfState, check_pdf_state, compute_source_hash},
     pdf::html_to_pdf,
-    store::{FilesystemStore, InvoiceStore},
+    store::{ClientStore, FilesystemStore, InvoiceStore},
     templates::{get_template_html, render_invoice_html},
     types::{FolioConfig, InvoiceFilter},
 };

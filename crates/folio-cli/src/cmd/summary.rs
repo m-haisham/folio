@@ -9,7 +9,7 @@ use eyre::Result;
 use folio_core::{
     compute::compute_invoice,
     config::{find_root, load_config},
-    store::{FilesystemStore, InvoiceStore, QuoteStore},
+    store::{ClientStore, FilesystemStore, InvoiceStore, QuoteStore},
     types::{InvoiceFilter, InvoiceStatus},
 };
 use rust_decimal::Decimal;

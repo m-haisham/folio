@@ -8,7 +8,7 @@ use dialoguer::Input;
 use eyre::Result;
 use folio_core::{
     config::{find_root, load_config},
-    store::{FilesystemStore, InvoiceStore},
+    store::{ClientStore, FilesystemStore},
     types::Client,
 };
 

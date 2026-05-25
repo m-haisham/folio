@@ -13,7 +13,7 @@ use folio_core::{
     config::{find_root, load_config},
     email::{EmailMessage, send_email},
     index::BuildIndex,
-    store::{FilesystemStore, InvoiceStore},
+    store::{ClientStore, FilesystemStore, InvoiceStore},
     templates::{get_email_template, render_email_body, render_email_subject},
     types::SentInfo,
 };

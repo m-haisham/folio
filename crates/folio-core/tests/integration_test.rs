@@ -2,7 +2,7 @@ use chrono::NaiveDate;
 use folio_core::{
     compute::{compute_invoice, derive_status},
     index::{BuildIndex, PdfState, check_pdf_state, compute_source_hash},
-    store::{FilesystemStore, InvoiceStore},
+    store::{ClientStore, FilesystemStore, InvoiceStore},
     types::{
         Client, Defaults, FolioConfig, Invoice, InvoiceStatus, LineItem, MeConfig, PaidInfo,
         PathsConfig, SentInfo, VoidedInfo,

@@ -13,7 +13,7 @@ use folio_core::{
     index::{BuildIndex, PdfState, check_pdf_state, compute_source_hash},
     pdf::html_to_pdf,
     quote_compute::compute_quote,
-    store::{FilesystemStore, InvoiceStore, QuoteStore},
+    store::{ClientStore, FilesystemStore, InvoiceStore, QuoteStore},
     templates::{
         get_email_template, get_template_html, render_email_body, render_email_subject,
         render_quote_html,

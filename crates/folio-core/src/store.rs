@@ -6,15 +6,18 @@ use async_trait::async_trait;
 use std::{fs, path::PathBuf};
 
 #[async_trait]
+pub trait ClientStore: Send + Sync {
+    async fn list_clients(&self) -> Result<Vec<Client>>;
+    async fn get_client(&self, slug: &str) -> Result<Client>;
+    async fn save_client(&self, client: &Client) -> Result<()>;
+}
+
+#[async_trait]
 pub trait InvoiceStore: Send + Sync {
     async fn list(&self, filter: &InvoiceFilter) -> Result<Vec<Invoice>>;
     async fn get(&self, id: &str) -> Result<Invoice>;
     async fn save(&self, invoice: &Invoice) -> Result<()>;
     async fn delete(&self, id: &str) -> Result<()>;
-
-    async fn list_clients(&self) -> Result<Vec<Client>>;
-    async fn get_client(&self, slug: &str) -> Result<Client>;
-    async fn save_client(&self, client: &Client) -> Result<()>;
 }
 
 #[async_trait]
@@ -191,7 +194,10 @@ impl InvoiceStore for FilesystemStore {
         }
         Ok(())
     }
+}
 
+#[async_trait]
+impl ClientStore for FilesystemStore {
     async fn list_clients(&self) -> Result<Vec<Client>> {
         let clients_dir = self.clients_dir();
         let mut clients = Vec::new();

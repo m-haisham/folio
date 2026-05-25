@@ -1,2 +1,2 @@
 install:
-    cargo install --locked -p folio-cli
+    cargo install --locked --path crates/folio-cli --bin folio

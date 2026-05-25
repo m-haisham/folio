@@ -1,89 +1,237 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Invoice {{ invoice.id }}</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    @media print { body { -webkit-print-color-adjust: exact; } }
-    .accent { background-color: #6366f1; }
-    .accent-text { color: #6366f1; }
-  </style>
-</head>
-<body class="bg-white text-gray-900 font-sans max-w-3xl mx-auto">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Invoice {{ invoice.id }}</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+            @page {
+                margin: 0;
+            }
+            @media print {
+                body {
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
+                }
+            }
 
-  <!-- Bold accent top bar -->
-  <div class="accent h-2 w-full"></div>
+            @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap");
+            body {
+                font-family: "Inter", system-ui, sans-serif;
+            }
 
-  <div class="p-10">
-    <!-- Header -->
-    <div class="flex justify-between items-start mb-12">
-      <div>
-        <div class="text-3xl font-black uppercase tracking-tight accent-text">{{ me.name }}</div>
-        {% if me.company %}<div class="text-sm font-medium text-gray-500 uppercase tracking-widest">{{ me.company }}</div>{% endif %}
-        <div class="text-sm text-gray-500 mt-1">{{ me.email }}</div>
-        {% for line in me.address %}<div class="text-sm text-gray-500">{{ line }}</div>{% endfor %}
-      </div>
-      <div class="text-right">
-        <div class="text-5xl font-black uppercase tracking-tight text-gray-100">INV</div>
-        <div class="text-xl font-bold accent-text -mt-2">{{ invoice.id }}</div>
-        <div class="text-xs text-gray-400 mt-2">Issued {{ invoice.date }}</div>
-        <div class="text-xs text-gray-400">Due <span class="font-semibold text-gray-700">{{ invoice.due }}</span></div>
-      </div>
-    </div>
+            .accent {
+                background-color: #7c3aed;
+            }
+            .accent-text {
+                color: #7c3aed;
+            }
+            .accent-border {
+                border-color: #7c3aed;
+            }
+            .accent-light {
+                background-color: #f5f3ff;
+            }
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+                width: 100%;
+            }
+        </style>
+    </head>
+    <body class="bg-white text-gray-900">
+        <!-- Top accent stripe -->
+        <div class="accent" style="height: 5px; width: 100%"></div>
 
-    <!-- Bill To card -->
-    <div class="bg-gray-50 rounded-lg p-4 mb-8 inline-block min-w-48">
-      <div class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Billed to</div>
-      <div class="font-bold text-gray-900">{{ client.name }}</div>
-      {% if client.contact %}<div class="text-sm text-gray-600">{{ client.contact }}</div>{% endif %}
-      <div class="text-sm text-gray-600">{{ client.email }}</div>
-      {% for line in client.address %}<div class="text-sm text-gray-600">{{ line }}</div>{% endfor %}
-    </div>
+        <div style="padding: 48px 56px">
+            <!-- Header -->
+            <div class="flex justify-between items-start mb-14">
+                <div>
+                    {% if me.logo %}
+                    <img
+                        src="{{ me.logo }}"
+                        alt="logo"
+                        style="max-height: 52px; margin-bottom: 12px"
+                    />
+                    {% endif %}
+                    <div class="text-2xl font-black tracking-tight accent-text">
+                        {{ me.name }}
+                    </div>
+                    {% if me.company %}
+                    <div
+                        class="text-xs font-semibold uppercase tracking-widest text-gray-400 mt-0.5"
+                    >
+                        {{ me.company }}
+                    </div>
+                    {% endif %}
+                    <div class="text-sm text-gray-400 mt-2">{{ me.email }}</div>
+                    {% for line in me.address %}
+                    <div class="text-sm text-gray-400">{{ line }}</div>
+                    {% endfor %}
+                </div>
+                <div class="text-right">
+                    <div
+                        class="font-black uppercase tracking-widest"
+                        style="font-size: 4rem; line-height: 1; color: #e2e8f0"
+                    >
+                        INV
+                    </div>
+                    <div class="text-lg font-bold accent-text -mt-2">
+                        {{ invoice.id }}
+                    </div>
+                    <div class="text-xs text-gray-400 mt-3 space-y-1">
+                        <div>
+                            Issued
+                            <span class="font-semibold text-gray-600"
+                                >{{ invoice.date }}</span
+                            >
+                        </div>
+                        <div>
+                            Due
+                            <span class="font-bold text-gray-900"
+                                >{{ invoice.due }}</span
+                            >
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-    <!-- Items table -->
-    <table class="w-full text-sm mb-8">
-      <thead>
-        <tr class="accent text-white text-xs uppercase tracking-widest">
-          <th class="text-left px-3 py-2 rounded-tl font-medium">Description</th>
-          <th class="text-right px-3 py-2 font-medium">Qty</th>
-          <th class="text-right px-3 py-2 font-medium">Rate</th>
-          <th class="text-right px-3 py-2 rounded-tr font-medium">Total</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for item in invoice.items %}
-        <tr class="border-b border-gray-100">
-          <td class="px-3 py-2.5">{{ item.description }}{% if item.unit %} <span class="text-gray-400">({{ item.unit }})</span>{% endif %}</td>
-          <td class="px-3 py-2.5 text-right">{{ item.quantity }}</td>
-          <td class="px-3 py-2.5 text-right">{{ invoice.currency }} {{ item.rate }}</td>
-          <td class="px-3 py-2.5 text-right font-semibold">{{ invoice.currency }} {{ item.total }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+            <!-- Bill To card -->
+            <div
+                class="accent-light rounded-xl p-5 mb-10 inline-block min-w-52"
+            >
+                <div
+                    class="text-[10px] font-bold uppercase tracking-[0.18em] text-purple-400 mb-2"
+                >
+                    Billed To
+                </div>
+                <div class="font-bold text-gray-900 text-base">
+                    {{ client.name }}
+                </div>
+                {% if client.contact %}
+                <div class="text-sm text-gray-500 mt-0.5">
+                    {{ client.contact }}
+                </div>
+                {% endif %}
+                <div class="text-sm text-gray-500">{{ client.email }}</div>
+                {% for line in client.address %}
+                <div class="text-sm text-gray-500">{{ line }}</div>
+                {% endfor %}
+            </div>
 
-    <!-- Totals -->
-    <div class="flex justify-end">
-      <div class="w-60 text-sm space-y-1">
-        <div class="flex justify-between text-gray-500">
-          <span>Subtotal</span><span>{{ invoice.currency }} {{ invoice.subtotal }}</span>
+            <!-- Items -->
+            <table
+                class="w-full text-sm mb-8"
+                style="border-collapse: collapse"
+            >
+                <thead>
+                    <tr
+                        class="accent text-white text-[10px] uppercase tracking-[0.18em]"
+                    >
+                        <th
+                            class="text-left px-4 py-3 font-semibold rounded-tl-lg"
+                        >
+                            Description
+                        </th>
+                        <th class="text-right px-4 py-3 font-semibold">Qty</th>
+                        <th class="text-right px-4 py-3 font-semibold">Rate</th>
+                        <th
+                            class="text-right px-4 py-3 font-semibold rounded-tr-lg"
+                        >
+                            Amount
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in invoice.items %}
+                    <tr style="border-bottom: 1px solid #f3f4f6">
+                        <td class="px-4 py-3 text-gray-800">
+                            {{ item.description }} {% if item.unit %}<span
+                                class="text-gray-400 text-xs ml-1"
+                                >({{ item.unit }})</span
+                            >{% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-right text-gray-500">
+                            {{ item.quantity }}
+                        </td>
+                        <td class="px-4 py-3 text-right text-gray-500">
+                            {{ invoice.currency }} {{ item.rate }}
+                        </td>
+                        <td class="px-4 py-3 text-right font-semibold">
+                            {{ invoice.currency }} {{ item.total }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Totals -->
+            <div class="flex justify-end mb-6">
+                <div class="w-64 text-sm">
+                    <div class="flex justify-between py-1.5 text-gray-500">
+                        <span>Subtotal</span
+                        ><span
+                            >{{ invoice.currency }} {{ invoice.subtotal }}</span
+                        >
+                    </div>
+                    {% if invoice.tax_rate %}
+                    <div class="flex justify-between py-1.5 text-gray-500">
+                        <span>Tax ({{ invoice.tax_rate }}%)</span
+                        ><span
+                            >{{ invoice.currency }} {{ invoice.tax_amount
+                            }}</span
+                        >
+                    </div>
+                    {% endif %}
+                    <div
+                        class="flex justify-between items-center py-3 px-4 mt-2 accent rounded-lg text-white font-black text-base"
+                    >
+                        <span>Total</span
+                        ><span>{{ invoice.currency }} {{ invoice.total }}</span>
+                    </div>
+                    {% if invoice.paid %}
+                    <div
+                        class="flex justify-between py-1.5 text-emerald-600 mt-2"
+                    >
+                        <span>Paid</span
+                        ><span
+                            >{{ invoice.currency }} {{ invoice.paid.amount
+                            }}</span
+                        >
+                    </div>
+                    <div class="flex justify-between py-1.5 font-semibold">
+                        <span>Outstanding</span
+                        ><span
+                            >{{ invoice.currency }} {{ invoice.outstanding
+                            }}</span
+                        >
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if invoice.notes %}
+            <div class="mt-8 text-sm text-gray-500 accent-light rounded-lg p-4">
+                <span class="font-semibold text-gray-700">Note: </span>{{
+                invoice.notes }}
+            </div>
+            {% endif %}
+
+            <!-- Footer -->
+            <div
+                class="mt-14 pt-4 flex justify-between items-center text-[10px] text-gray-400 uppercase tracking-widest"
+                style="border-top: 1px solid #f3f4f6"
+            >
+                <span
+                    >{{ me.name }}{% if me.company %} · {{ me.company }}{% endif
+                    %}</span
+                >
+                <span>{{ me.email }}</span>
+            </div>
         </div>
-        {% if invoice.tax_rate %}
-        <div class="flex justify-between text-gray-500">
-          <span>Tax ({{ invoice.tax_rate }}%)</span><span>{{ invoice.currency }} {{ invoice.tax_amount }}</span>
-        </div>
-        {% endif %}
-        <div class="flex justify-between font-black text-lg pt-2 border-t-2 border-gray-900 accent-text">
-          <span>Total</span><span>{{ invoice.currency }} {{ invoice.total }}</span>
-        </div>
-      </div>
-    </div>
 
-    {% if invoice.notes %}
-    <div class="mt-10 text-sm text-gray-500 bg-gray-50 rounded p-4">{{ invoice.notes }}</div>
-    {% endif %}
-  </div>
-
-</body>
+        <!-- Bottom accent stripe -->
+        <div class="accent" style="height: 3px; width: 100%"></div>
+    </body>
 </html>

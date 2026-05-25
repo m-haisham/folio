@@ -1,97 +1,480 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Invoice {{ invoice.id }}</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    @media print { body { -webkit-print-color-adjust: exact; } }
-    .slate-header { background: #1e293b; color: #f1f5f9; }
-    .slate-accent { color: #38bdf8; }
-    .slate-row-even { background: #f8fafc; }
-  </style>
-</head>
-<body class="bg-white text-slate-800 font-sans max-w-3xl mx-auto">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Invoice {{ invoice.id }}</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+            @page {
+                margin: 0;
+            }
+            @media print {
+                body {
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
+                }
+            }
+            body {
+                font-family:
+                    system-ui,
+                    -apple-system,
+                    sans-serif;
+            }
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+                width: 100%;
+            }
+        </style>
+    </head>
+    <body class="bg-white">
+        <!-- ── Dark header ────────────────────────────────────────────── -->
+        <div
+            style="
+                background: #0f172a;
+                padding: 44px 56px 36px;
+                position: relative;
+                overflow: hidden;
+                width: 100%;
+                box-sizing: border-box;
+            "
+        >
+            <!-- Subtle geometric accent -->
+            <div
+                style="
+                    position: absolute;
+                    top: -40px;
+                    right: -40px;
+                    width: 220px;
+                    height: 220px;
+                    border-radius: 50%;
+                    background: rgba(56, 189, 248, 0.06);
+                "
+            ></div>
+            <div
+                style="
+                    position: absolute;
+                    top: 20px;
+                    right: 30px;
+                    width: 100px;
+                    height: 100px;
+                    border-radius: 50%;
+                    background: rgba(56, 189, 248, 0.04);
+                "
+            ></div>
 
-  <!-- Dark header band -->
-  <div class="slate-header px-10 py-8 flex justify-between items-start">
-    <div>
-      <div class="text-2xl font-bold text-white">{{ me.name }}</div>
-      {% if me.company %}<div class="text-sm text-slate-300">{{ me.company }}</div>{% endif %}
-      <div class="text-sm text-slate-400 mt-1">{{ me.email }}</div>
-      {% for line in me.address %}<div class="text-sm text-slate-400">{{ line }}</div>{% endfor %}
-    </div>
-    <div class="text-right">
-      <div class="text-4xl font-black uppercase tracking-widest slate-accent opacity-20">INVOICE</div>
-      <div class="text-xl font-bold slate-accent -mt-1">{{ invoice.id }}</div>
-      <div class="text-xs text-slate-400 mt-2">Date: {{ invoice.date }}</div>
-      <div class="text-xs text-slate-400">Due: <span class="text-white font-semibold">{{ invoice.due }}</span></div>
-    </div>
-  </div>
-
-  <div class="px-10 py-8">
-    <!-- Bill To -->
-    <div class="mb-8">
-      <div class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Bill To</div>
-      <div class="font-bold text-slate-900 text-lg">{{ client.name }}</div>
-      {% if client.contact %}<div class="text-slate-600">{{ client.contact }}</div>{% endif %}
-      <div class="text-slate-600">{{ client.email }}</div>
-      {% for line in client.address %}<div class="text-slate-600">{{ line }}</div>{% endfor %}
-    </div>
-
-    <!-- Items table -->
-    <table class="w-full text-sm mb-8 rounded overflow-hidden">
-      <thead class="bg-slate-700 text-slate-200 text-xs uppercase tracking-widest">
-        <tr>
-          <th class="text-left px-4 py-3 font-medium">Description</th>
-          <th class="text-right px-4 py-3 font-medium">Qty</th>
-          <th class="text-right px-4 py-3 font-medium">Rate</th>
-          <th class="text-right px-4 py-3 font-medium">Amount</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for item in invoice.items %}
-        <tr class="{% if loop.index is even %}slate-row-even{% endif %} border-b border-slate-100">
-          <td class="px-4 py-3">{{ item.description }}{% if item.unit %} <span class="text-slate-400 text-xs">({{ item.unit }})</span>{% endif %}</td>
-          <td class="px-4 py-3 text-right">{{ item.quantity }}</td>
-          <td class="px-4 py-3 text-right">{{ invoice.currency }} {{ item.rate }}</td>
-          <td class="px-4 py-3 text-right font-semibold">{{ invoice.currency }} {{ item.total }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-
-    <!-- Totals -->
-    <div class="flex justify-end">
-      <div class="w-60 text-sm">
-        <div class="flex justify-between py-1 text-slate-500">
-          <span>Subtotal</span><span>{{ invoice.currency }} {{ invoice.subtotal }}</span>
+            <div
+                style="
+                    position: relative;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                "
+            >
+                <div>
+                    {% if me.logo %}
+                    <img
+                        src="{{ me.logo }}"
+                        alt="logo"
+                        style="
+                            max-height: 44px;
+                            margin-bottom: 12px;
+                            filter: brightness(0) invert(1);
+                            opacity: 0.9;
+                        "
+                    />
+                    {% endif %}
+                    <div
+                        style="
+                            font-size: 1.4rem;
+                            font-weight: 800;
+                            color: #f1f5f9;
+                            letter-spacing: -0.01em;
+                        "
+                    >
+                        {{ me.name }}
+                    </div>
+                    {% if me.company %}
+                    <div
+                        style="
+                            font-size: 0.72rem;
+                            font-weight: 600;
+                            text-transform: uppercase;
+                            letter-spacing: 0.15em;
+                            color: #94a3b8;
+                            margin-top: 3px;
+                        "
+                    >
+                        {{ me.company }}
+                    </div>
+                    {% endif %}
+                    <div
+                        style="
+                            font-size: 0.78rem;
+                            color: #94a3b8;
+                            margin-top: 8px;
+                        "
+                    >
+                        {{ me.email }}
+                    </div>
+                    {% for line in me.address %}
+                    <div style="font-size: 0.78rem; color: #94a3b8">
+                        {{ line }}
+                    </div>
+                    {% endfor %}
+                </div>
+                <div style="text-align: right">
+                    <div
+                        style="
+                            font-size: 0.65rem;
+                            font-weight: 700;
+                            text-transform: uppercase;
+                            letter-spacing: 0.2em;
+                            color: #64748b;
+                            margin-bottom: 6px;
+                        "
+                    >
+                        Invoice
+                    </div>
+                    <div
+                        style="
+                            font-size: 1.6rem;
+                            font-weight: 900;
+                            color: #38bdf8;
+                            letter-spacing: -0.02em;
+                            line-height: 1;
+                        "
+                    >
+                        {{ invoice.id }}
+                    </div>
+                    <div
+                        style="
+                            margin-top: 12px;
+                            font-size: 0.72rem;
+                            color: #64748b;
+                            line-height: 1.9;
+                        "
+                    >
+                        <div>
+                            Issued
+                            <span style="color: #94a3b8; font-weight: 600"
+                                >{{ invoice.date }}</span
+                            >
+                        </div>
+                        <div>
+                            Due
+                            <span style="color: #f1f5f9; font-weight: 700"
+                                >{{ invoice.due }}</span
+                            >
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        {% if invoice.tax_rate %}
-        <div class="flex justify-between py-1 text-slate-500">
-          <span>Tax ({{ invoice.tax_rate }}%)</span><span>{{ invoice.currency }} {{ invoice.tax_amount }}</span>
-        </div>
-        {% endif %}
-        <div class="flex justify-between py-3 px-3 mt-1 slate-header rounded font-bold text-lg">
-          <span>Total</span><span class="slate-accent">{{ invoice.currency }} {{ invoice.total }}</span>
-        </div>
-        {% if invoice.paid %}
-        <div class="flex justify-between py-1 text-emerald-600 mt-1">
-          <span>Paid</span><span>{{ invoice.currency }} {{ invoice.paid.amount }}</span>
-        </div>
-        <div class="flex justify-between py-1 font-semibold">
-          <span>Outstanding</span><span>{{ invoice.currency }} {{ invoice.outstanding }}</span>
-        </div>
-        {% endif %}
-      </div>
-    </div>
 
-    {% if invoice.notes %}
-    <div class="mt-10 text-sm text-slate-500 bg-slate-50 rounded p-4 border-l-4 border-slate-300">
-      {{ invoice.notes }}
-    </div>
-    {% endif %}
-  </div>
+        <!-- Sky accent line -->
+        <div
+            style="
+                height: 3px;
+                background: linear-gradient(90deg, #38bdf8, #818cf8);
+            "
+        ></div>
 
-</body>
+        <!-- ── Body ─────────────────────────────────────────────────────────────── -->
+        <div style="padding: 40px 56px; background: #fff">
+            <!-- Bill To -->
+            <div style="margin-bottom: 36px">
+                <div
+                    style="
+                        font-size: 0.62rem;
+                        font-weight: 700;
+                        text-transform: uppercase;
+                        letter-spacing: 0.18em;
+                        color: #94a3b8;
+                        margin-bottom: 8px;
+                    "
+                >
+                    Bill To
+                </div>
+                <div
+                    style="font-size: 1.05rem; font-weight: 700; color: #0f172a"
+                >
+                    {{ client.name }}
+                </div>
+                {% if client.contact %}
+                <div
+                    style="font-size: 0.82rem; color: #475569; margin-top: 2px"
+                >
+                    {{ client.contact }}
+                </div>
+                {% endif %}
+                <div style="font-size: 0.82rem; color: #475569">
+                    {{ client.email }}
+                </div>
+                {% for line in client.address %}
+                <div style="font-size: 0.82rem; color: #475569">{{ line }}</div>
+                {% endfor %}
+            </div>
+
+            <!-- Items table -->
+            <table
+                style="
+                    width: 100%;
+                    font-size: 0.82rem;
+                    border-collapse: collapse;
+                    margin-bottom: 28px;
+                "
+            >
+                <thead>
+                    <tr style="background: #1e293b">
+                        <th
+                            style="
+                                text-align: left;
+                                padding: 10px 14px;
+                                font-size: 0.62rem;
+                                font-weight: 700;
+                                text-transform: uppercase;
+                                letter-spacing: 0.15em;
+                                color: #94a3b8;
+                            "
+                        >
+                            Description
+                        </th>
+                        <th
+                            style="
+                                text-align: right;
+                                padding: 10px 14px;
+                                font-size: 0.62rem;
+                                font-weight: 700;
+                                text-transform: uppercase;
+                                letter-spacing: 0.15em;
+                                color: #94a3b8;
+                            "
+                        >
+                            Qty
+                        </th>
+                        <th
+                            style="
+                                text-align: right;
+                                padding: 10px 14px;
+                                font-size: 0.62rem;
+                                font-weight: 700;
+                                text-transform: uppercase;
+                                letter-spacing: 0.15em;
+                                color: #94a3b8;
+                            "
+                        >
+                            Rate
+                        </th>
+                        <th
+                            style="
+                                text-align: right;
+                                padding: 10px 14px 10px 8px;
+                                font-size: 0.62rem;
+                                font-weight: 700;
+                                text-transform: uppercase;
+                                letter-spacing: 0.15em;
+                                color: #94a3b8;
+                            "
+                        >
+                            Amount
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in invoice.items %}
+                    <tr
+                        style="background: {% if loop.index is even %}#f8fafc{% else %}#ffffff{% endif %}; border-bottom: 1px solid #f1f5f9;"
+                    >
+                        <td style="padding: 11px 14px; color: #1e293b">
+                            {{ item.description }} {% if item.unit %}<span
+                                style="
+                                    color: #94a3b8;
+                                    font-size: 0.72rem;
+                                    margin-left: 4px;
+                                "
+                                >({{ item.unit }})</span
+                            >{% endif %}
+                        </td>
+                        <td
+                            style="
+                                padding: 11px 14px;
+                                text-align: right;
+                                color: #64748b;
+                            "
+                        >
+                            {{ item.quantity }}
+                        </td>
+                        <td
+                            style="
+                                padding: 11px 14px;
+                                text-align: right;
+                                color: #64748b;
+                            "
+                        >
+                            {{ invoice.currency }} {{ item.rate }}
+                        </td>
+                        <td
+                            style="
+                                padding: 11px 14px 11px 8px;
+                                text-align: right;
+                                font-weight: 600;
+                                color: #1e293b;
+                            "
+                        >
+                            {{ invoice.currency }} {{ item.total }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Totals -->
+            <div style="display: flex; justify-content: flex-end">
+                <div style="width: 240px; font-size: 0.82rem">
+                    <div
+                        style="
+                            display: flex;
+                            justify-content: space-between;
+                            padding: 6px 0;
+                            color: #64748b;
+                            border-bottom: 1px solid #f1f5f9;
+                        "
+                    >
+                        <span>Subtotal</span
+                        ><span
+                            >{{ invoice.currency }} {{ invoice.subtotal }}</span
+                        >
+                    </div>
+                    {% if invoice.tax_rate %}
+                    <div
+                        style="
+                            display: flex;
+                            justify-content: space-between;
+                            padding: 6px 0;
+                            color: #64748b;
+                            border-bottom: 1px solid #f1f5f9;
+                        "
+                    >
+                        <span>Tax ({{ invoice.tax_rate }}%)</span
+                        ><span
+                            >{{ invoice.currency }} {{ invoice.tax_amount
+                            }}</span
+                        >
+                    </div>
+                    {% endif %}
+                    <div
+                        style="
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            margin-top: 8px;
+                            padding: 12px 16px;
+                            background: #0f172a;
+                            border-radius: 8px;
+                        "
+                    >
+                        <span
+                            style="
+                                font-weight: 700;
+                                font-size: 0.9rem;
+                                color: #f1f5f9;
+                            "
+                            >Total</span
+                        >
+                        <span
+                            style="
+                                font-weight: 900;
+                                font-size: 1.1rem;
+                                color: #38bdf8;
+                            "
+                            >{{ invoice.currency }} {{ invoice.total }}</span
+                        >
+                    </div>
+                    {% if invoice.paid %}
+                    <div
+                        style="
+                            display: flex;
+                            justify-content: space-between;
+                            padding: 6px 0;
+                            color: #22c55e;
+                            font-size: 0.78rem;
+                            margin-top: 8px;
+                        "
+                    >
+                        <span>Paid</span
+                        ><span
+                            >{{ invoice.currency }} {{ invoice.paid.amount
+                            }}</span
+                        >
+                    </div>
+                    <div
+                        style="
+                            display: flex;
+                            justify-content: space-between;
+                            padding: 4px 0;
+                            font-weight: 600;
+                            font-size: 0.78rem;
+                        "
+                    >
+                        <span>Outstanding</span
+                        ><span
+                            >{{ invoice.currency }} {{ invoice.outstanding
+                            }}</span
+                        >
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if invoice.notes %}
+            <div
+                style="
+                    margin-top: 32px;
+                    padding: 14px 18px;
+                    background: #f8fafc;
+                    border-left: 3px solid #38bdf8;
+                    border-radius: 0 6px 6px 0;
+                    font-size: 0.8rem;
+                    color: #475569;
+                "
+            >
+                {{ invoice.notes }}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- ── Footer ────────────────────────────────────────────────────────────── -->
+        <div
+            style="
+                background: #0f172a;
+                padding: 14px 56px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                width: 100%;
+                box-sizing: border-box;
+            "
+        >
+            <span
+                style="
+                    font-size: 0.62rem;
+                    color: #64748b;
+                    text-transform: uppercase;
+                    letter-spacing: 0.15em;
+                "
+                >{{ me.name }}{% if me.company %} · {{ me.company }}{% endif
+                %}</span
+            >
+            <span
+                style="
+                    font-size: 0.62rem;
+                    color: #64748b;
+                    letter-spacing: 0.05em;
+                "
+                >{{ me.email }}</span
+            >
+        </div>
+    </body>
 </html>

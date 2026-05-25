@@ -1,97 +1,533 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Invoice {{ invoice.id }}</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    @media print { body { -webkit-print-color-adjust: exact; } }
-    body { background: #fffbf5; color: #3d2b1f; font-family: Georgia, serif; }
-    .warm-border { border-color: #c8956c; }
-    .warm-bg { background-color: #fdf3e7; }
-    .warm-accent { color: #9b4d2e; }
-    .warm-light { color: #b07a5a; }
-    .floral-deco { font-size: 1.5rem; color: #c8956c; }
-  </style>
-</head>
-<body class="p-10 max-w-3xl mx-auto" style="background:#fffbf5;">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Invoice {{ invoice.id }}</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+            @page {
+                margin: 0;
+            }
+            @media print {
+                body {
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
+                }
+            }
 
-  <!-- Decorative header -->
-  <div class="text-center mb-2">
-    <span class="floral-deco">&#10047; &#10045; &#10047;</span>
-  </div>
-  <div class="border-t-2 border-b warm-border py-4 mb-8 flex justify-between items-start">
-    <div>
-      <div class="text-xl font-bold warm-accent">{{ me.name }}</div>
-      {% if me.company %}<div class="text-sm warm-light italic">{{ me.company }}</div>{% endif %}
-      <div class="text-sm warm-light">{{ me.email }}</div>
-      {% for line in me.address %}<div class="text-sm warm-light">{{ line }}</div>{% endfor %}
-    </div>
-    <div class="text-right">
-      <div class="text-2xl font-bold warm-accent">Invoice</div>
-      <div class="text-sm warm-light">{{ invoice.id }}</div>
-      <div class="text-xs warm-light mt-1">{{ invoice.date }}</div>
-      <div class="text-xs warm-light">Due {{ invoice.due }}</div>
-    </div>
-  </div>
+            body {
+                font-family: Georgia, "Times New Roman", serif;
+                background: #fdf8f2;
+                color: #2d1f14;
+            }
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+                width: 100%;
+            }
+            .warm-dark {
+                color: #7c3516;
+            }
+            .warm-mid {
+                color: #a0522d;
+            }
+            .warm-light {
+                color: #b8875e;
+            }
+            .warm-border {
+                border-color: #d4a574;
+            }
+            .warm-bg {
+                background: #fdf0e0;
+            }
+            .warm-deep {
+                background: #7c3516;
+            }
+            .warm-rule {
+                border-color: #c8956c;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- ── Header band ───────────────────────────────────────────── -->
+        <div
+            class="warm-deep"
+            style="padding: 36px 56px 28px; width: 100%; box-sizing: border-box"
+        >
+            <!-- SVG botanical corner — top left -->
+            <svg
+                style="
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 130px;
+                    opacity: 0.18;
+                "
+                viewBox="0 0 160 160"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+            >
+                <path d="M10 150 Q30 80 80 60 Q50 100 10 150Z" fill="#f5deb3" />
+                <path d="M5 120 Q40 70 100 50 Q60 90 5 120Z" fill="#deb887" />
+                <path
+                    d="M20 155 Q55 100 110 80 Q70 120 20 155Z"
+                    fill="#f5deb3"
+                    opacity="0.7"
+                />
+                <circle cx="85" cy="45" r="8" fill="#f5deb3" opacity="0.6" />
+                <circle cx="105" cy="55" r="5" fill="#deb887" opacity="0.5" />
+            </svg>
 
-  <!-- Bill To -->
-  <div class="warm-bg border warm-border rounded p-4 mb-8 text-sm">
-    <div class="font-bold warm-accent text-xs uppercase tracking-widest mb-1">Bill To</div>
-    <div class="font-semibold">{{ client.name }}</div>
-    {% if client.contact %}<div class="warm-light">{{ client.contact }}</div>{% endif %}
-    <div class="warm-light">{{ client.email }}</div>
-    {% for line in client.address %}<div class="warm-light">{{ line }}</div>{% endfor %}
-  </div>
+            <!-- SVG botanical corner — top right -->
+            <svg
+                style="
+                    position: absolute;
+                    top: 0;
+                    right: 0;
+                    width: 130px;
+                    opacity: 0.18;
+                    transform: scaleX(-1);
+                "
+                viewBox="0 0 160 160"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+            >
+                <path d="M10 150 Q30 80 80 60 Q50 100 10 150Z" fill="#f5deb3" />
+                <path d="M5 120 Q40 70 100 50 Q60 90 5 120Z" fill="#deb887" />
+                <path
+                    d="M20 155 Q55 100 110 80 Q70 120 20 155Z"
+                    fill="#f5deb3"
+                    opacity="0.7"
+                />
+                <circle cx="85" cy="45" r="8" fill="#f5deb3" opacity="0.6" />
+            </svg>
 
-  <!-- Items -->
-  <table class="w-full text-sm mb-6">
-    <thead>
-      <tr class="border-b-2 warm-border text-xs uppercase tracking-widest warm-light">
-        <th class="text-left py-2 font-normal">Description</th>
-        <th class="text-right py-2 font-normal">Qty</th>
-        <th class="text-right py-2 font-normal">Rate</th>
-        <th class="text-right py-2 font-normal">Amount</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for item in invoice.items %}
-      <tr class="border-b warm-border" style="border-bottom-style: dashed;">
-        <td class="py-2">{{ item.description }}{% if item.unit %} <em class="warm-light text-xs">{{ item.unit }}</em>{% endif %}</td>
-        <td class="py-2 text-right">{{ item.quantity }}</td>
-        <td class="py-2 text-right">{{ invoice.currency }} {{ item.rate }}</td>
-        <td class="py-2 text-right font-semibold warm-accent">{{ invoice.currency }} {{ item.total }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+            <div
+                style="
+                    position: relative;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                "
+            >
+                <div>
+                    {% if me.logo %}
+                    <img
+                        src="{{ me.logo }}"
+                        alt="logo"
+                        style="
+                            max-height: 44px;
+                            margin-bottom: 10px;
+                            opacity: 0.9;
+                        "
+                    />
+                    {% endif %}
+                    <div
+                        style="
+                            font-size: 1.35rem;
+                            font-weight: 700;
+                            color: #fdf0e0;
+                            letter-spacing: 0.01em;
+                        "
+                    >
+                        {{ me.name }}
+                    </div>
+                    {% if me.company %}
+                    <div
+                        style="
+                            font-size: 0.78rem;
+                            color: #e8c99a;
+                            font-style: italic;
+                            margin-top: 2px;
+                        "
+                    >
+                        {{ me.company }}
+                    </div>
+                    {% endif %}
+                    <div
+                        style="
+                            font-size: 0.78rem;
+                            color: #d4b896;
+                            margin-top: 6px;
+                        "
+                    >
+                        {{ me.email }}
+                    </div>
+                    {% for line in me.address %}
+                    <div style="font-size: 0.78rem; color: #d4b896">
+                        {{ line }}
+                    </div>
+                    {% endfor %}
+                </div>
+                <div style="text-align: right">
+                    <div
+                        style="
+                            font-size: 2rem;
+                            font-weight: 700;
+                            color: #fdf0e0;
+                            letter-spacing: 0.05em;
+                        "
+                    >
+                        Invoice
+                    </div>
+                    <div
+                        style="
+                            font-size: 0.9rem;
+                            color: #e8c99a;
+                            margin-top: 2px;
+                        "
+                    >
+                        {{ invoice.id }}
+                    </div>
+                    <div
+                        style="
+                            font-size: 0.72rem;
+                            color: #d4b896;
+                            margin-top: 8px;
+                            line-height: 1.7;
+                        "
+                    >
+                        <div>
+                            Issued
+                            <span style="color: #fdf0e0; font-weight: 600"
+                                >{{ invoice.date }}</span
+                            >
+                        </div>
+                        <div>
+                            Due
+                            <span style="color: #fdf0e0; font-weight: 700"
+                                >{{ invoice.due }}</span
+                            >
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-  <!-- Totals -->
-  <div class="flex justify-end mb-10">
-    <div class="w-56 text-sm">
-      <div class="flex justify-between py-1 warm-light">
-        <span>Subtotal</span><span>{{ invoice.subtotal }}</span>
-      </div>
-      {% if invoice.tax_rate %}
-      <div class="flex justify-between py-1 warm-light">
-        <span>Tax {{ invoice.tax_rate }}%</span><span>{{ invoice.tax_amount }}</span>
-      </div>
-      {% endif %}
-      <div class="flex justify-between py-2 border-t warm-border font-bold text-base warm-accent">
-        <span>Total {{ invoice.currency }}</span><span>{{ invoice.total }}</span>
-      </div>
-    </div>
-  </div>
+            <!-- Decorative divider -->
+            <div
+                style="
+                    text-align: center;
+                    margin-top: 20px;
+                    color: #e8c99a;
+                    font-size: 1.1rem;
+                    letter-spacing: 0.5em;
+                    opacity: 0.7;
+                "
+            >
+                ✦ ❧ ✦
+            </div>
+        </div>
 
-  {% if invoice.notes %}
-  <div class="text-sm warm-light border-t warm-border pt-4 italic">{{ invoice.notes }}</div>
-  {% endif %}
+        <!-- ── Body ────────────────────────────────────────────────────────────── -->
+        <div style="padding: 40px 56px; background: #fdf8f2">
+            <!-- Bill To -->
+            <div
+                class="warm-bg"
+                style="
+                    border: 1px solid #d4a574;
+                    border-radius: 8px;
+                    padding: 16px 20px;
+                    margin-bottom: 32px;
+                    display: inline-block;
+                    min-width: 220px;
+                "
+            >
+                <div
+                    style="
+                        font-size: 0.65rem;
+                        font-weight: 700;
+                        text-transform: uppercase;
+                        letter-spacing: 0.16em;
+                        color: #a0522d;
+                        margin-bottom: 6px;
+                    "
+                >
+                    Bill To
+                </div>
+                <div style="font-weight: 700; font-size: 1rem; color: #2d1f14">
+                    {{ client.name }}
+                </div>
+                {% if client.contact %}
+                <div
+                    style="font-size: 0.82rem; color: #7c5a3a; margin-top: 2px"
+                >
+                    {{ client.contact }}
+                </div>
+                {% endif %}
+                <div style="font-size: 0.82rem; color: #7c5a3a">
+                    {{ client.email }}
+                </div>
+                {% for line in client.address %}
+                <div style="font-size: 0.82rem; color: #7c5a3a">{{ line }}</div>
+                {% endfor %}
+            </div>
 
-  <!-- Decorative footer -->
-  <div class="text-center mt-8">
-    <span class="floral-deco">&#10047; &#10045; &#10047;</span>
-    <div class="text-xs warm-light mt-1">Thank you for your business</div>
-  </div>
+            <!-- Line Items -->
+            <table
+                style="
+                    width: 100%;
+                    font-size: 0.82rem;
+                    border-collapse: collapse;
+                    margin-bottom: 28px;
+                "
+            >
+                <thead>
+                    <tr style="border-bottom: 2px solid #c8956c">
+                        <th
+                            style="
+                                text-align: left;
+                                padding: 6px 0;
+                                font-size: 0.65rem;
+                                font-weight: 700;
+                                text-transform: uppercase;
+                                letter-spacing: 0.14em;
+                                color: #a0522d;
+                                font-style: normal;
+                            "
+                        >
+                            Description
+                        </th>
+                        <th
+                            style="
+                                text-align: right;
+                                padding: 6px 8px;
+                                font-size: 0.65rem;
+                                font-weight: 700;
+                                text-transform: uppercase;
+                                letter-spacing: 0.14em;
+                                color: #a0522d;
+                            "
+                        >
+                            Qty
+                        </th>
+                        <th
+                            style="
+                                text-align: right;
+                                padding: 6px 8px;
+                                font-size: 0.65rem;
+                                font-weight: 700;
+                                text-transform: uppercase;
+                                letter-spacing: 0.14em;
+                                color: #a0522d;
+                            "
+                        >
+                            Rate
+                        </th>
+                        <th
+                            style="
+                                text-align: right;
+                                padding: 6px 0 6px 8px;
+                                font-size: 0.65rem;
+                                font-weight: 700;
+                                text-transform: uppercase;
+                                letter-spacing: 0.14em;
+                                color: #a0522d;
+                            "
+                        >
+                            Amount
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in invoice.items %}
+                    <tr style="border-bottom: 1px dashed #e8c99a">
+                        <td style="padding: 10px 8px 10px 0; color: #2d1f14">
+                            {{ item.description }} {% if item.unit %}<em
+                                style="color: #b8875e; font-size: 0.75rem"
+                            >
+                                · {{ item.unit }}</em
+                            >{% endif %}
+                        </td>
+                        <td
+                            style="
+                                padding: 10px 8px;
+                                text-align: right;
+                                color: #7c5a3a;
+                            "
+                        >
+                            {{ item.quantity }}
+                        </td>
+                        <td
+                            style="
+                                padding: 10px 8px;
+                                text-align: right;
+                                color: #7c5a3a;
+                            "
+                        >
+                            {{ invoice.currency }} {{ item.rate }}
+                        </td>
+                        <td
+                            style="
+                                padding: 10px 0 10px 8px;
+                                text-align: right;
+                                font-weight: 600;
+                                color: #7c3516;
+                            "
+                        >
+                            {{ invoice.currency }} {{ item.total }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
 
-</body>
+            <!-- Totals -->
+            <div
+                style="
+                    display: flex;
+                    justify-content: flex-end;
+                    margin-bottom: 32px;
+                "
+            >
+                <div style="width: 220px; font-size: 0.82rem">
+                    <div
+                        style="
+                            display: flex;
+                            justify-content: space-between;
+                            padding: 5px 0;
+                            color: #a0522d;
+                            border-bottom: 1px solid #e8c99a;
+                        "
+                    >
+                        <span>Subtotal</span
+                        ><span
+                            >{{ invoice.currency }} {{ invoice.subtotal }}</span
+                        >
+                    </div>
+                    {% if invoice.tax_rate %}
+                    <div
+                        style="
+                            display: flex;
+                            justify-content: space-between;
+                            padding: 5px 0;
+                            color: #a0522d;
+                            border-bottom: 1px solid #e8c99a;
+                        "
+                    >
+                        <span>Tax ({{ invoice.tax_rate }}%)</span
+                        ><span
+                            >{{ invoice.currency }} {{ invoice.tax_amount
+                            }}</span
+                        >
+                    </div>
+                    {% endif %}
+                    <div
+                        style="
+                            display: flex;
+                            justify-content: space-between;
+                            padding: 10px 0 6px;
+                            font-weight: 700;
+                            font-size: 1rem;
+                            color: #7c3516;
+                            border-top: 2px solid #c8956c;
+                            margin-top: 4px;
+                        "
+                    >
+                        <span>Total</span
+                        ><span>{{ invoice.currency }} {{ invoice.total }}</span>
+                    </div>
+                    {% if invoice.paid %}
+                    <div
+                        style="
+                            display: flex;
+                            justify-content: space-between;
+                            padding: 4px 0;
+                            color: #5a7a4a;
+                            font-size: 0.8rem;
+                        "
+                    >
+                        <span>Paid</span
+                        ><span
+                            >{{ invoice.currency }} {{ invoice.paid.amount
+                            }}</span
+                        >
+                    </div>
+                    <div
+                        style="
+                            display: flex;
+                            justify-content: space-between;
+                            padding: 4px 0;
+                            font-weight: 600;
+                            font-size: 0.8rem;
+                        "
+                    >
+                        <span>Outstanding</span
+                        ><span
+                            >{{ invoice.currency }} {{ invoice.outstanding
+                            }}</span
+                        >
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if invoice.notes %}
+            <div
+                style="
+                    font-size: 0.8rem;
+                    color: #a0522d;
+                    border-top: 1px solid #d4a574;
+                    padding-top: 14px;
+                    font-style: italic;
+                "
+            >
+                {{ invoice.notes }}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- ── Footer band ─────────────────────────────────────────────────────── -->
+        <div
+            class="warm-deep"
+            style="
+                padding: 16px 56px;
+                position: relative;
+                overflow: hidden;
+                width: 100%;
+                box-sizing: border-box;
+            "
+        >
+            <!-- SVG botanical corner — bottom -->
+            <svg
+                style="
+                    position: absolute;
+                    bottom: 0;
+                    right: 0;
+                    width: 110px;
+                    opacity: 0.15;
+                    transform: rotate(180deg);
+                "
+                viewBox="0 0 160 160"
+                fill="none"
+            >
+                <path d="M10 150 Q30 80 80 60 Q50 100 10 150Z" fill="#f5deb3" />
+                <path d="M5 120 Q40 70 100 50 Q60 90 5 120Z" fill="#deb887" />
+                <circle cx="85" cy="45" r="8" fill="#f5deb3" opacity="0.6" />
+            </svg>
+            <div
+                style="
+                    text-align: center;
+                    font-size: 0.7rem;
+                    color: #e8c99a;
+                    letter-spacing: 0.12em;
+                    position: relative;
+                "
+            >
+                ✦ &nbsp; Thank you for your business &nbsp; ✦
+            </div>
+            <div
+                style="
+                    text-align: center;
+                    font-size: 0.65rem;
+                    color: #e8c99a;
+                    margin-top: 4px;
+                    letter-spacing: 0.08em;
+                    position: relative;
+                "
+            >
+                {{ me.name }}{% if me.company %} · {{ me.company }}{% endif %}
+            </div>
+        </div>
+    </body>
 </html>

@@ -4,7 +4,7 @@
 
 use clap::{Args, Subcommand};
 use colored::Colorize;
-use dialoguer::{Input, theme::ColorfulTheme};
+use dialoguer::Input;
 use eyre::Result;
 use folio_core::{
     config::{find_root, load_config},

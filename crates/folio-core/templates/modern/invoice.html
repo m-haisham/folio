@@ -176,9 +176,31 @@
                 </tbody>
             </table>
 
-            <!-- Totals -->
-            <div class="flex justify-end mb-6">
-                <div class="w-64 text-sm">
+            <!-- Totals + Notes -->
+            <div class="flex justify-between items-start mb-6">
+                {% if invoice.notes %}
+                <div style="flex: 1; padding-right: 32px; padding-top: 4px">
+                    <div
+                        class="text-[10px] font-bold uppercase tracking-[0.18em] accent-label mb-1"
+                        style="color: #7c3aed"
+                    >
+                        Notes
+                    </div>
+                    <div
+                        class="text-gray-500"
+                        style="
+                            font-size: 0.875rem;
+                            line-height: 1.6;
+                            white-space: pre-wrap;
+                        "
+                    >
+                        {{ invoice.notes }}
+                    </div>
+                </div>
+                {% else %}
+                <div style="flex: 1"></div>
+                {% endif %}
+                <div class="w-64 text-sm" style="flex-shrink: 0">
                     <div class="flex justify-between py-1.5 text-gray-500">
                         <span>Subtotal</span
                         ><span
@@ -220,13 +242,6 @@
                     {% endif %}
                 </div>
             </div>
-
-            {% if invoice.notes %}
-            <div class="mt-8 text-sm text-gray-500 accent-light rounded-lg p-4">
-                <span class="font-semibold text-gray-700">Note: </span>{{
-                invoice.notes }}
-            </div>
-            {% endif %}
         </div>
 
         <!-- Footer — fixed so it appears at the bottom of every page -->

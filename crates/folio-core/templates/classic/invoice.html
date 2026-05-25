@@ -284,15 +284,45 @@
             </table>
         </div>
 
-        <!-- ── Totals ────────────────────────────────────────────────────────────── -->
+        <!-- ── Totals + Notes ─────────────────────────────────────────────────────── -->
         <div
             style="
                 padding: 20px 56px 40px;
                 display: flex;
-                justify-content: flex-end;
+                justify-content: space-between;
+                align-items: flex-start;
             "
         >
-            <div style="width: 210px; font-size: 0.8rem">
+            {% if invoice.notes %}
+            <div style="flex: 1; padding-right: 40px; padding-top: 4px">
+                <div
+                    style="
+                        font-size: 0.6rem;
+                        font-weight: 700;
+                        text-transform: uppercase;
+                        letter-spacing: 0.15em;
+                        color: #888;
+                        margin-bottom: 5px;
+                    "
+                >
+                    Notes
+                </div>
+                <div
+                    style="
+                        font-size: 0.8rem;
+                        color: #555;
+                        font-style: italic;
+                        line-height: 1.6;
+                        white-space: pre-wrap;
+                    "
+                >
+                    {{ invoice.notes }}
+                </div>
+            </div>
+            {% else %}
+            <div style="flex: 1"></div>
+            {% endif %}
+            <div style="width: 210px; font-size: 0.8rem; flex-shrink: 0">
                 <div
                     style="
                         display: flex;
@@ -364,22 +394,6 @@
                 {% endif %}
             </div>
         </div>
-
-        {% if invoice.notes %}
-        <div
-            style="
-                padding: 0 56px 36px;
-                font-size: 0.78rem;
-                color: #555;
-                font-style: italic;
-                border-top: 1px solid #e5e7eb;
-                padding-top: 16px;
-                margin-top: -20px;
-            "
-        >
-            {{ invoice.notes }}
-        </div>
-        {% endif %}
 
         <!-- Footer — fixed so it appears at the bottom of every page -->
         <div

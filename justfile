@@ -1,5 +1,5 @@
 install:
-    cargo install --locked --path crates/folio-cli --bin folio
+    cargo install --locked --path crates/folio-cli --bin folio --force
 
 deploy VERSION:
     git tag {{ VERSION }}

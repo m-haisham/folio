@@ -49,7 +49,7 @@ pub fn compute_invoice(
         .items
         .iter()
         .map(|item| {
-            let total = item.quantity * item.rate;
+            let total = (item.quantity * item.rate).round_dp(2);
             ComputedLineItem {
                 description: item.description.clone(),
                 quantity: item.quantity,
@@ -61,15 +61,16 @@ pub fn compute_invoice(
         .collect();
 
     let subtotal: Decimal = computed_items.iter().map(|i| i.total).sum();
-    let tax_amount = subtotal * (tax_rate / Decimal::from(100));
-    let total = subtotal + tax_amount;
+    let tax_amount = (subtotal * (tax_rate / Decimal::from(100))).round_dp(2);
+    let total = (subtotal + tax_amount).round_dp(2);
+    let subtotal = subtotal.round_dp(2);
 
     let outstanding = if let Some(ref paid) = invoice.paid {
         let remaining = total - paid.amount;
         if remaining < Decimal::ZERO {
             Decimal::ZERO
         } else {
-            remaining
+            remaining.round_dp(2)
         }
     } else if invoice.voided.is_some() {
         Decimal::ZERO

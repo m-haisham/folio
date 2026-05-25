@@ -150,9 +150,30 @@
                 </tbody>
             </table>
 
-            <!-- Totals -->
-            <div class="flex justify-end">
-                <div class="w-56 text-sm">
+            <!-- Totals + Notes -->
+            <div class="flex justify-between items-start">
+                {% if invoice.notes %}
+                <div style="flex: 1; padding-right: 32px; padding-top: 4px">
+                    <div
+                        class="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 mb-1"
+                    >
+                        Notes
+                    </div>
+                    <div
+                        class="text-gray-500"
+                        style="
+                            font-size: 0.875rem;
+                            line-height: 1.6;
+                            white-space: pre-wrap;
+                        "
+                    >
+                        {{ invoice.notes }}
+                    </div>
+                </div>
+                {% else %}
+                <div style="flex: 1"></div>
+                {% endif %}
+                <div class="w-56 text-sm" style="flex-shrink: 0">
                     <div class="flex justify-between py-1 text-gray-500">
                         <span>Subtotal</span>
                         <span
@@ -197,20 +218,6 @@
                     {% endif %}
                 </div>
             </div>
-
-            {% if invoice.notes %}
-            <div
-                class="mt-12 text-sm text-gray-500 pt-5"
-                style="border-top: 1px solid #e5e7eb"
-            >
-                <div
-                    class="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500 mb-1"
-                >
-                    Notes
-                </div>
-                {{ invoice.notes }}
-            </div>
-            {% endif %}
         </div>
 
         <!-- Footer — fixed so it appears at the bottom of every page -->

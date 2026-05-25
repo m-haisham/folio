@@ -337,9 +337,43 @@
                 </tbody>
             </table>
 
-            <!-- Totals -->
-            <div style="display: flex; justify-content: flex-end">
-                <div style="width: 240px; font-size: 0.82rem">
+            <!-- Totals + Notes -->
+            <div
+                style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                "
+            >
+                {% if invoice.notes %}
+                <div style="flex: 1; padding-right: 40px; padding-top: 4px">
+                    <div
+                        style="
+                            font-size: 0.6rem;
+                            font-weight: 700;
+                            text-transform: uppercase;
+                            letter-spacing: 0.15em;
+                            color: #94a3b8;
+                            margin-bottom: 5px;
+                        "
+                    >
+                        Notes
+                    </div>
+                    <div
+                        style="
+                            font-size: 0.82rem;
+                            color: #64748b;
+                            line-height: 1.6;
+                            white-space: pre-wrap;
+                        "
+                    >
+                        {{ invoice.notes }}
+                    </div>
+                </div>
+                {% else %}
+                <div style="flex: 1"></div>
+                {% endif %}
+                <div style="width: 240px; font-size: 0.82rem; flex-shrink: 0">
                     <div
                         style="
                             display: flex;
@@ -434,22 +468,6 @@
                     {% endif %}
                 </div>
             </div>
-
-            {% if invoice.notes %}
-            <div
-                style="
-                    margin-top: 32px;
-                    padding: 14px 18px;
-                    background: #f8fafc;
-                    border-left: 3px solid {% if theme %}{{ theme.primary }}{% else %}#38bdf8{% endif %};
-                    border-radius: 0 6px 6px 0;
-                    font-size: 0.8rem;
-                    color: #475569;
-                "
-            >
-                {{ invoice.notes }}
-            </div>
-            {% endif %}
         </div>
 
         <!-- Footer — fixed so it appears at the bottom of every page -->

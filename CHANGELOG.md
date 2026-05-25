@@ -16,7 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Template system
 - Bundled document templates renamed from `invoice.html` → `document.html`. Custom templates using `invoice.html` continue to work as a legacy fallback.
-- Each bundled template now ships with `email.html` — a Tera plain-text template for the email body, styled to match the template's personality. Resolution order: custom `email.html` → bundled `email.html` → `[email.templates].body` in config → hardcoded default.
+- Each bundled template now ships with `email.html` — a Tera HTML email template for the email body, styled to match the template's personality. Resolution order: custom `email.html` → bundled `email.html` → `[email.templates].body` in config → hardcoded default.
+- All six bundled `email.html` templates redesigned as full HTML emails (responsive layout, inline styles); emails are sent as `text/html` instead of plain text.
 - `folio templates export` now exports `document.html`, `email.html`, and `template.toml`.
 - `render_email_body` and `render_email_subject` now receive `document_type` in their Tera context so email templates can reference `{{ document_type }}` ("Invoice" or "Quote").
 - Default email subject updated to `{{ document_type }} {{ invoice.id }} from {{ me.company }}`.
@@ -49,7 +50,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `folio init` now creates the `quotes/` directory as part of the standard scaffold.
 - All six bundled templates updated to use `document_type` and `due_label` Tera variables; quotes render with `Quote` heading and `Expires` date label; existing invoices are unaffected.
 
+### Changed
 
+- Invoice notes are now displayed in a side-by-side layout next to the totals block rather than below the line-items table.
+- All six bundled document templates: notes text rendered at a smaller font size and explicitly left-aligned to prevent renderer-dependent alignment issues.
+- SMTP credentials (`username`/`password`) are now optional when the password is empty, enabling unauthenticated connections to local mail catchers (e.g. Mailpit) without requiring dummy credentials.
+
+### Fixed
+
+- All computed amounts (`subtotal`, `tax_amount`, `total`, `outstanding`) are now rounded to 2 decimal places.
+- Invoice and quote notes are trimmed of surrounding whitespace via Tera's `| trim` filter before rendering, fixing lines appearing centred or offset when `white-space: pre-wrap` was in effect.
 
 ## [0.1.1] - 2026-05-25
 

@@ -38,6 +38,10 @@ pub struct FilesystemStore {
     pub paths: PathsConfig,
 }
 
+fn id_year(id: &str) -> &str {
+    id.split('-').nth(1).unwrap_or("unknown")
+}
+
 impl FilesystemStore {
     /// Create a store using the conventional directory layout
     /// (`clients/`, `invoices/`, `templates/`, `output/`).
@@ -58,16 +62,9 @@ impl FilesystemStore {
 
     /// Absolute path to an invoice TOML, e.g. `{invoices}/{year}/{id}.toml`.
     pub fn invoice_path(&self, id: &str) -> PathBuf {
-        // Extract year from IDs like INV-2026-001
-        let parts: Vec<&str> = id.split('-').collect();
-        let year = if parts.len() >= 2 {
-            parts[1]
-        } else {
-            "unknown"
-        };
         self.root
             .join(self.paths.invoices())
-            .join(year)
+            .join(id_year(id))
             .join(format!("{}.toml", id))
     }
 
@@ -93,15 +90,9 @@ impl FilesystemStore {
 
     /// Absolute path to a quote TOML, e.g. `{quotes}/{year}/{id}.toml`.
     pub fn quote_path(&self, id: &str) -> PathBuf {
-        let parts: Vec<&str> = id.split('-').collect();
-        let year = if parts.len() >= 2 {
-            parts[1]
-        } else {
-            "unknown"
-        };
         self.root
             .join(self.paths.quotes())
-            .join(year)
+            .join(id_year(id))
             .join(format!("{}.toml", id))
     }
 

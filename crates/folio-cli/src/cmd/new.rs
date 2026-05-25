@@ -4,15 +4,18 @@
 //! and line items. Auto-generates the next sequential ID based on `id_format`
 //! in `folio.toml`. Writes the invoice TOML to `invoices/{year}/{id}.toml`.
 //! Does **not** build or send — those are separate steps.
+//!
+//! If no clients exist yet, the wizard offers to create one inline so the user
+//! never hits a dead end on their first run.
 
 use chrono::{Datelike, Local};
 use clap::Args;
-use dialoguer::{Input, Select};
+use dialoguer::{Confirm, Input, Select};
 use eyre::Result;
 use folio_core::{
     config::{find_root, load_config},
     store::{FilesystemStore, InvoiceStore},
-    types::{Invoice, InvoiceFilter, LineItem},
+    types::{Client, Invoice, InvoiceFilter, LineItem},
 };
 use rust_decimal::Decimal;
 use std::str::FromStr;
@@ -22,6 +25,8 @@ use std::str::FromStr;
 /// Prompts for client, date, and line items, then writes the invoice TOML to
 /// `invoices/{year}/{id}.toml`. The next sequential ID is auto-generated from
 /// the `id_format` in `folio.toml`.
+///
+/// If no clients exist yet you will be offered the option to create one now.
 ///
 /// Examples:
 ///
@@ -47,26 +52,44 @@ pub async fn run(args: NewArgs) -> Result<()> {
     let config = load_config(&root)?;
     let store = FilesystemStore::with_paths(&root, config.paths().clone());
 
-    // Client selection
+    // ── Client selection ──────────────────────────────────────────────────
     let client_slug = if let Some(c) = args.client {
+        // Validate the slug exists; give an actionable hint if not.
+        store.get_client(&c).await.map_err(|e| {
+            eyre::eyre!(e).wrap_err(format!(
+                "expected file at {}/{}.toml",
+                store.clients_dir().display(),
+                c
+            ))
+        })?;
         c
     } else {
         let clients = store.list_clients().await?;
         if clients.is_empty() {
-            eyre::bail!("No clients found. Create one in clients/ first.");
+            // Offer to create a client inline rather than bailing.
+            eprintln!("No clients found in {}.", store.clients_dir().display());
+            let create = Confirm::new()
+                .with_prompt("Create a client now?")
+                .default(true)
+                .interact()?;
+            if !create {
+                eyre::bail!(
+                    "no clients found — add a TOML file to {}/ first",
+                    store.clients_dir().display()
+                );
+            }
+            create_client_interactive(&store).await?
+        } else {
+            let names: Vec<&str> = clients.iter().map(|c| c.slug.as_str()).collect();
+            let idx = Select::new()
+                .with_prompt("Client")
+                .items(&names)
+                .interact()?;
+            clients[idx].slug.clone()
         }
-        let names: Vec<&str> = clients.iter().map(|c| c.slug.as_str()).collect();
-        let idx = Select::new()
-            .with_prompt("Client")
-            .items(&names)
-            .interact()?;
-        clients[idx].slug.clone()
     };
 
-    // Verify client exists
-    let _client = store.get_client(&client_slug).await?;
-
-    // Date
+    // ── Date ─────────────────────────────────────────────────────────────
     let date_str = if let Some(d) = args.date {
         d
     } else {
@@ -78,11 +101,11 @@ pub async fn run(args: NewArgs) -> Result<()> {
     };
 
     let date = chrono::NaiveDate::parse_from_str(&date_str, "%Y-%m-%d")
-        .map_err(|e| eyre::eyre!("Invalid date: {}", e))?;
+        .map_err(|_| eyre::eyre!("invalid date {:?} — expected YYYY-MM-DD", date_str))?;
 
     let year = date.format("%Y").to_string();
 
-    // Auto-generate ID
+    // ── ID generation ─────────────────────────────────────────────────────
     let id_format = config
         .defaults
         .id_format
@@ -94,7 +117,7 @@ pub async fn run(args: NewArgs) -> Result<()> {
 
     println!("Creating invoice {}", id);
 
-    // Line items — loop until the user submits an empty description
+    // ── Line items — loop until the user submits an empty description ─────
     let mut items = Vec::new();
     loop {
         let desc: String = Input::new()
@@ -109,8 +132,8 @@ pub async fn run(args: NewArgs) -> Result<()> {
             .with_prompt("Quantity")
             .default("1.0".to_string())
             .interact_text()?;
-        let quantity: Decimal =
-            Decimal::from_str(&qty_str).map_err(|e| eyre::eyre!("Invalid quantity: {}", e))?;
+        let quantity: Decimal = Decimal::from_str(&qty_str)
+            .map_err(|_| eyre::eyre!("invalid quantity {:?}", qty_str))?;
 
         let unit: String = Input::new()
             .with_prompt("Unit (e.g. hours, project)")
@@ -119,7 +142,7 @@ pub async fn run(args: NewArgs) -> Result<()> {
 
         let rate_str: String = Input::new().with_prompt("Rate").interact_text()?;
         let rate: Decimal =
-            Decimal::from_str(&rate_str).map_err(|e| eyre::eyre!("Invalid rate: {}", e))?;
+            Decimal::from_str(&rate_str).map_err(|_| eyre::eyre!("invalid rate {:?}", rate_str))?;
 
         items.push(LineItem {
             description: desc,
@@ -130,7 +153,7 @@ pub async fn run(args: NewArgs) -> Result<()> {
     }
 
     if items.is_empty() {
-        eyre::bail!("No items added. Aborting.");
+        eyre::bail!("no items added — at least one line item is required");
     }
 
     let invoice = Invoice {
@@ -152,6 +175,76 @@ pub async fn run(args: NewArgs) -> Result<()> {
     println!("✓ Created invoices/{}/{}.toml", year, id);
 
     Ok(())
+}
+
+/// Interactively prompt for client details and write `clients/{slug}.toml`.
+///
+/// Returns the slug of the newly created client.
+async fn create_client_interactive(store: &FilesystemStore) -> Result<String> {
+    println!();
+    let name: String = Input::new().with_prompt("Client name").interact_text()?;
+
+    // Derive a default slug from the name (lowercase, spaces → hyphens)
+    let default_slug = name
+        .to_lowercase()
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join("-");
+
+    let slug: String = Input::new()
+        .with_prompt("Client slug (used as filename)")
+        .default(default_slug)
+        .interact_text()?;
+
+    let contact: String = Input::new()
+        .with_prompt("Contact name")
+        .allow_empty(true)
+        .interact_text()?;
+
+    let email: String = Input::new().with_prompt("Billing email").interact_text()?;
+
+    let addr1: String = Input::new()
+        .with_prompt("Address line 1")
+        .allow_empty(true)
+        .interact_text()?;
+    let addr2: String = Input::new()
+        .with_prompt("Address line 2")
+        .allow_empty(true)
+        .interact_text()?;
+
+    let mut address = Vec::new();
+    if !addr1.is_empty() {
+        address.push(addr1);
+    }
+    if !addr2.is_empty() {
+        address.push(addr2);
+    }
+
+    let client = Client {
+        name,
+        contact: if contact.is_empty() {
+            None
+        } else {
+            Some(contact)
+        },
+        email,
+        address,
+        currency: None,
+        due_days: None,
+        template: None,
+        email_opts: None,
+        notes: None,
+        slug: slug.clone(),
+    };
+
+    store.save_client(&client).await?;
+    println!(
+        "✓ Created {}/{}.toml\n",
+        store.clients_dir().display(),
+        slug
+    );
+
+    Ok(slug)
 }
 
 /// Find the next sequential invoice number for the given year.

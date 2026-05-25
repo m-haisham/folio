@@ -41,7 +41,10 @@ pub async fn run(args: VoidArgs) -> Result<()> {
     let config = load_config(&root)?;
     let store = FilesystemStore::with_paths(&root, config.paths().clone());
 
-    let mut invoice = store.get(&args.id).await?;
+    let mut invoice = store
+        .get(&args.id)
+        .await
+        .map_err(|e| eyre::eyre!(e).wrap_err(format!("could not load invoice {}", args.id)))?;
 
     invoice.voided = Some(VoidedInfo {
         at: Local::now().date_naive(),

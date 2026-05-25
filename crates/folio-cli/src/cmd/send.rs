@@ -63,7 +63,10 @@ pub async fn run(args: SendArgs) -> Result<()> {
     let config = load_config(&root)?;
     let store = FilesystemStore::with_paths(&root, config.paths().clone());
 
-    let mut invoice = store.get(&args.id).await?;
+    let mut invoice = store
+        .get(&args.id)
+        .await
+        .map_err(|e| eyre::eyre!(e).wrap_err(format!("could not load invoice {}", args.id)))?;
 
     if invoice.sent.is_some() && !args.force {
         eyre::bail!(

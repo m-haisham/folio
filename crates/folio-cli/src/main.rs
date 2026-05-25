@@ -19,7 +19,6 @@
 mod cmd;
 
 use clap::{Parser, Subcommand};
-use eyre::Result;
 
 /// Plaintext invoice management for freelancers.
 ///
@@ -63,11 +62,12 @@ enum Commands {
 }
 
 #[tokio::main]
-async fn main() -> Result<()> {
-    color_eyre::install()?;
+async fn main() {
+    install_error_hook();
+
     let cli = Cli::parse();
 
-    match cli.command {
+    let result = match cli.command {
         Commands::Init(args) => cmd::init::run(args).await,
         Commands::New(args) => cmd::new::run(args).await,
         Commands::Build(args) => cmd::build::run(args).await,
@@ -78,5 +78,48 @@ async fn main() -> Result<()> {
         Commands::Summary(args) => cmd::summary::run(args).await,
         Commands::Preview(args) => cmd::preview::run(args).await,
         Commands::Templates(args) => cmd::templates::run(args).await,
+    };
+
+    if let Err(err) = result {
+        print_error(&err);
+        std::process::exit(1);
+    }
+}
+
+/// Install an eyre hook that suppresses the default backtrace/spantrace output.
+/// Actual rendering is done by [`print_error`] so we control the format exactly.
+fn install_error_hook() {
+    // Use the color-eyre hook for richer context capture, but we override the
+    // display ourselves in `print_error` so the user never sees the raw hook output.
+    color_eyre::config::HookBuilder::default()
+        .display_env_section(false)
+        .install()
+        .expect("failed to install eyre hook");
+}
+
+/// Print an error in the spec's format:
+///
+/// ```text
+/// error: <primary message>
+///   → <context line 1>
+///   → <context line 2>
+/// ```
+///
+/// Each `wrap_err` / `wrap_err_with` call added by the CLI contributes one
+/// context line. The innermost cause (the root error) is the primary message.
+fn print_error(err: &eyre::Report) {
+    // eyre's chain goes from outermost wrapper → root cause.
+    // We want root cause first, wrappers as hints.
+    let chain: Vec<String> = err.chain().map(|e| e.to_string()).collect();
+
+    // The last entry is the root cause; everything before it is context.
+    let (hints, root) = match chain.split_last() {
+        Some((last, rest)) => (rest, last.as_str()),
+        None => return,
+    };
+
+    eprintln!("error: {}", root);
+    for hint in hints.iter().rev() {
+        eprintln!("  \u{2192} {}", hint);
     }
 }

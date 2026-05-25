@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-05-25
+
 ### Added
 - `[defaults].notes` in `folio.toml` — a global fallback note rendered on every invoice that does not define its own `notes`.
 - `[defaults].notes` in `clients/{slug}.toml` — a per-client fallback (e.g. payment details) that takes priority over the global default but loses to a note written directly on the invoice.

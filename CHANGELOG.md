@@ -44,9 +44,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Configuration
 - `folio.toml` — global config with `[me]`, `[defaults]`, `[email]`, `[build]`, and `[paths]` sections.
 - Configurable directory layout via `[paths]`: `clients`, `invoices`, `templates`, `output` can each be redirected.
-- Email provider config for SMTP (with `FOLIO_SMTP_PASSWORD` env var), SendGrid (`FOLIO_SENDGRID_API_KEY`), and Resend (`FOLIO_RESEND_API_KEY`).
+- Email provider config for SMTP (with `FOLIO_SMTP_PASSWORD` env var, optional for local testing), SendGrid (`FOLIO_SENDGRID_API_KEY`), and Resend (`FOLIO_RESEND_API_KEY`).
+- `SmtpConfig` supports a `tls` field (`true` by default); set to `false` for plain/unencrypted SMTP connections such as local mail catchers.
 - Customisable email subject and body templates (Tera syntax).
 - `FOLIO_CONFIG` env var to override the path to `folio.toml`.
 - `FOLIO_CHROME_PATH` env var to specify the Chrome/Chromium binary.
+
+#### Testing
+- Email integration tests against [Mailpit](https://github.com/axllent/mailpit) via `docker compose up -d`; covers plain send, CC recipients, PDF attachments, and missing-config error path.
+- `docker-compose.yml` included in the repository root to spin up Mailpit on SMTP `:1025` and HTTP API `:8025`.
+- Integration tests are `#[ignore]`d and opt-in: `cargo test --test email_integration -- --ignored`.
+
+#### Distribution
+- cargo-dist artifact renamed from `folio-cli-*` to `folio-*` via `[package.metadata.dist] name = "folio"` in `folio-cli/Cargo.toml`.
 
 [0.1.0]: https://github.com/m-haisham/folio/releases/tag/v0.1.0

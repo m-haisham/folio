@@ -1,6 +1,6 @@
 use crate::{
     error::{FolioError, Result},
-    types::{Client, Invoice, InvoiceFilter},
+    types::{Client, Invoice, InvoiceFilter, PathsConfig},
 };
 use async_trait::async_trait;
 use std::{fs, path::PathBuf};
@@ -17,17 +17,37 @@ pub trait InvoiceStore: Send + Sync {
     async fn save_client(&self, client: &Client) -> Result<()>;
 }
 
+/// Filesystem-backed store that reads and writes TOML files under `root`.
+///
+/// Directory names are resolved through `paths`, which mirrors the `[paths]`
+/// section of `folio.toml`. Pass `PathsConfig::default()` (or simply use
+/// `FilesystemStore::new`) to get the conventional layout.
 pub struct FilesystemStore {
     pub root: PathBuf,
+    pub paths: PathsConfig,
 }
 
 impl FilesystemStore {
+    /// Create a store using the conventional directory layout
+    /// (`clients/`, `invoices/`, `templates/`, `output/`).
     pub fn new(root: impl Into<PathBuf>) -> Self {
-        Self { root: root.into() }
+        Self {
+            root: root.into(),
+            paths: PathsConfig::default(),
+        }
     }
 
-    fn invoice_path(&self, id: &str) -> PathBuf {
-        // Extract year from ID like INV-2026-001
+    /// Create a store with custom directory paths taken from `folio.toml`.
+    pub fn with_paths(root: impl Into<PathBuf>, paths: PathsConfig) -> Self {
+        Self {
+            root: root.into(),
+            paths,
+        }
+    }
+
+    /// Absolute path to an invoice TOML, e.g. `{invoices}/{year}/{id}.toml`.
+    pub fn invoice_path(&self, id: &str) -> PathBuf {
+        // Extract year from IDs like INV-2026-001
         let parts: Vec<&str> = id.split('-').collect();
         let year = if parts.len() >= 2 {
             parts[1]
@@ -35,16 +55,36 @@ impl FilesystemStore {
             "unknown"
         };
         self.root
-            .join("invoices")
+            .join(self.paths.invoices())
             .join(year)
             .join(format!("{}.toml", id))
+    }
+
+    /// Absolute path to the clients directory.
+    pub fn clients_dir(&self) -> PathBuf {
+        self.root.join(self.paths.clients())
+    }
+
+    /// Absolute path to the invoices directory.
+    pub fn invoices_dir(&self) -> PathBuf {
+        self.root.join(self.paths.invoices())
+    }
+
+    /// Absolute path to the output directory.
+    pub fn output_dir(&self) -> PathBuf {
+        self.root.join(self.paths.output())
+    }
+
+    /// Absolute path to the custom templates directory.
+    pub fn templates_dir(&self) -> PathBuf {
+        self.root.join(self.paths.templates())
     }
 }
 
 #[async_trait]
 impl InvoiceStore for FilesystemStore {
     async fn list(&self, filter: &InvoiceFilter) -> Result<Vec<Invoice>> {
-        let invoices_dir = self.root.join("invoices");
+        let invoices_dir = self.invoices_dir();
         let mut invoices = Vec::new();
 
         if !invoices_dir.exists() {
@@ -126,7 +166,7 @@ impl InvoiceStore for FilesystemStore {
     }
 
     async fn list_clients(&self) -> Result<Vec<Client>> {
-        let clients_dir = self.root.join("clients");
+        let clients_dir = self.clients_dir();
         let mut clients = Vec::new();
 
         if !clients_dir.exists() {
@@ -156,7 +196,7 @@ impl InvoiceStore for FilesystemStore {
     }
 
     async fn get_client(&self, slug: &str) -> Result<Client> {
-        let path = self.root.join("clients").join(format!("{}.toml", slug));
+        let path = self.clients_dir().join(format!("{}.toml", slug));
         if !path.exists() {
             return Err(FolioError::ClientNotFound {
                 slug: slug.to_string(),
@@ -170,7 +210,7 @@ impl InvoiceStore for FilesystemStore {
     }
 
     async fn save_client(&self, client: &Client) -> Result<()> {
-        let clients_dir = self.root.join("clients");
+        let clients_dir = self.clients_dir();
         fs::create_dir_all(&clients_dir)?;
         let path = clients_dir.join(format!("{}.toml", client.slug));
         let contents = toml::to_string_pretty(client)?;

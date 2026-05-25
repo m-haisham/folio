@@ -22,6 +22,8 @@ a headless browser.
 
 ## Repository Layout
 
+The default layout. All directories are configurable via `[paths]` in `folio.toml`.
+
 ```
 my-invoices/                        # user's git repo
 │
@@ -77,6 +79,14 @@ due_days  = 30             # used when `due` is omitted from invoice
 template  = "basic"        # bundled: basic | classic | modern | floral | slate
 id_format = "INV-{year}-{seq:03}"   # invoice ID format
 
+# Optional: override default directory layout (all paths relative to repo root)
+# Omit this section entirely to use the defaults shown below
+[paths]
+clients   = "clients"
+invoices  = "invoices"
+templates = "templates"
+output    = "output"
+
 [email]
 provider = "smtp"          # smtp | sendgrid | resend
 from     = "you@yourcompany.dev"
@@ -95,6 +105,36 @@ username = "you@gmail.com"
 [email.resend]
 # api_key via env var: FOLIO_RESEND_API_KEY
 ```
+
+### `[paths]` — directory layout
+
+All paths are relative to the repo root (the directory containing `folio.toml`). The
+`[paths]` section is optional — omitting it is equivalent to the defaults above.
+
+This lets you nest the layout to suit your repo structure. For example, if invoicing
+is one part of a larger repo:
+
+```toml
+[paths]
+clients   = "billing/clients"
+invoices  = "billing/invoices"
+templates = "billing/templates"
+output    = "billing/output"
+```
+
+Or flatten everything into the root:
+
+```toml
+[paths]
+clients   = "."
+invoices  = "."
+templates = "."
+output    = "."
+```
+
+**Note:** the `templates` path only controls where folio looks for *custom* templates.
+Bundled templates (`basic`, `classic`, `modern`, `floral`, `slate`) are always resolved
+from the binary and are unaffected by this setting.
 
 ### `clients/{slug}.toml` — one file per client
 

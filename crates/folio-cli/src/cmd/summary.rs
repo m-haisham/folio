@@ -1,3 +1,9 @@
+//! `folio summary` — aggregate financial report.
+//!
+//! Totals billed, paid, and outstanding across all non-voided invoices.
+//! Breaks the numbers down by client and, when multiple currencies are
+//! present, by currency. Also shows a count of invoices per status.
+
 use clap::Args;
 use eyre::Result;
 use folio_core::{
@@ -9,10 +15,26 @@ use folio_core::{
 use rust_decimal::Decimal;
 use std::collections::HashMap;
 
+/// Show an aggregate financial summary.
+///
+/// Sums billed, paid, and outstanding amounts across all non-voided invoices.
+/// Provides a per-client breakdown and, when multiple currencies are involved,
+/// a per-currency subtotal. A status count is printed at the end.
+///
+/// Examples:
+///
+/// ```sh
+/// folio summary
+/// folio summary --year 2026
+/// folio summary --client acme
+/// ```
 #[derive(Args)]
 pub struct SummaryArgs {
+    /// Restrict the report to the given year.
     #[arg(long)]
     pub year: Option<i32>,
+
+    /// Restrict the report to the given client slug.
     #[arg(long)]
     pub client: Option<String>,
 }
@@ -21,7 +43,7 @@ pub async fn run(args: SummaryArgs) -> Result<()> {
     let cwd = std::env::current_dir()?;
     let root = find_root(&cwd).ok_or_else(|| eyre::eyre!("No folio.toml found"))?;
     let config = load_config(&root)?;
-    let store = FilesystemStore::new(&root);
+    let store = FilesystemStore::with_paths(&root, config.paths().clone());
 
     let filter = InvoiceFilter {
         year: args.year,
@@ -34,6 +56,7 @@ pub async fn run(args: SummaryArgs) -> Result<()> {
     let mut total_billed = Decimal::ZERO;
     let mut total_paid = Decimal::ZERO;
     let mut total_outstanding = Decimal::ZERO;
+    // (billed, paid) per client slug
     let mut by_client: HashMap<String, (Decimal, Decimal)> = HashMap::new();
     let mut by_currency: HashMap<String, Decimal> = HashMap::new();
     let mut status_counts: HashMap<String, usize> = HashMap::new();
@@ -42,6 +65,7 @@ pub async fn run(args: SummaryArgs) -> Result<()> {
         let client = store.get_client(&invoice.client).await?;
         let computed = compute_invoice(invoice, &client, &config);
 
+        // Voided invoices are excluded from all financial totals
         if matches!(computed.status, InvoiceStatus::Voided) {
             continue;
         }
@@ -83,6 +107,7 @@ pub async fn run(args: SummaryArgs) -> Result<()> {
         );
     }
 
+    // Currency breakdown is only shown when there is more than one currency
     if by_currency.len() > 1 {
         println!("\n--- By Currency ---");
         for (currency, total) in &by_currency {

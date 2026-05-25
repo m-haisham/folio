@@ -53,8 +53,10 @@ pub fn list_bundled() -> Vec<TemplateInfo> {
     ]
 }
 
-pub fn list_custom(root: &Path) -> Vec<TemplateInfo> {
-    let templates_dir = root.join("templates");
+/// List custom templates found under `templates_dir`.
+///
+/// `templates_dir` should be the resolved path (i.e. `root.join(paths.templates())`).
+pub fn list_custom(templates_dir: &Path) -> Vec<TemplateInfo> {
     let mut result = Vec::new();
 
     if let Ok(entries) = fs::read_dir(&templates_dir) {
@@ -77,9 +79,13 @@ pub fn list_custom(root: &Path) -> Vec<TemplateInfo> {
     result
 }
 
-pub fn get_template_html(name: &str, root: &Path) -> Result<String> {
+/// Return the HTML source for a named template.
+///
+/// Custom templates (from `templates_dir`) take priority over bundled ones.
+/// `templates_dir` should be the resolved path (i.e. `root.join(paths.templates())`).
+pub fn get_template_html(name: &str, templates_dir: &Path) -> Result<String> {
     // Custom templates take priority over bundled
-    let custom_path = root.join("templates").join(name).join("invoice.html");
+    let custom_path = templates_dir.join(name).join("invoice.html");
     if custom_path.exists() {
         return Ok(fs::read_to_string(&custom_path)?);
     }

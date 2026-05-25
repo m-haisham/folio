@@ -50,6 +50,50 @@ pub struct EmailTemplates {
     pub body: Option<String>,
 }
 
+/// Directory layout configuration. All values are relative to the repo root.
+/// Omitting `[paths]` in `folio.toml` is equivalent to the defaults shown below.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PathsConfig {
+    /// Directory containing `{slug}.toml` client files. Default: `"clients"`.
+    pub clients: Option<String>,
+    /// Directory containing `{year}/{id}.toml` invoice files. Default: `"invoices"`.
+    pub invoices: Option<String>,
+    /// Directory searched for custom Tera HTML templates. Default: `"templates"`.
+    pub templates: Option<String>,
+    /// Directory where rendered PDFs are written. Default: `"output"`.
+    pub output: Option<String>,
+}
+
+impl Default for PathsConfig {
+    fn default() -> Self {
+        Self {
+            clients: None,
+            invoices: None,
+            templates: None,
+            output: None,
+        }
+    }
+}
+
+impl PathsConfig {
+    /// Return the effective `clients` path, falling back to `"clients"`.
+    pub fn clients(&self) -> &str {
+        self.clients.as_deref().unwrap_or("clients")
+    }
+    /// Return the effective `invoices` path, falling back to `"invoices"`.
+    pub fn invoices(&self) -> &str {
+        self.invoices.as_deref().unwrap_or("invoices")
+    }
+    /// Return the effective `templates` path, falling back to `"templates"`.
+    pub fn templates(&self) -> &str {
+        self.templates.as_deref().unwrap_or("templates")
+    }
+    /// Return the effective `output` path, falling back to `"output"`.
+    pub fn output(&self) -> &str {
+        self.output.as_deref().unwrap_or("output")
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct BuildConfig {
     pub chrome_path: Option<String>,
@@ -61,7 +105,24 @@ pub struct FolioConfig {
     pub defaults: Defaults,
     pub email: Option<EmailConfig>,
     pub build: Option<BuildConfig>,
+    /// Optional directory layout overrides. Defaults to conventional names when absent.
+    pub paths: Option<PathsConfig>,
 }
+
+impl FolioConfig {
+    /// Return a reference to the resolved `PathsConfig`, using defaults if the
+    /// `[paths]` section was omitted from `folio.toml`.
+    pub fn paths(&self) -> &PathsConfig {
+        self.paths.as_ref().map_or(&DEFAULT_PATHS, |p| p)
+    }
+}
+
+static DEFAULT_PATHS: PathsConfig = PathsConfig {
+    clients: None,
+    invoices: None,
+    templates: None,
+    output: None,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Client {

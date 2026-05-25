@@ -1,3 +1,9 @@
+//! `folio list` — tabular view of all invoices.
+//!
+//! Prints every invoice as a colour-coded table row showing ID, client, dates,
+//! total, derived status, and whether the PDF is fresh, stale, or not yet
+//! built. Supports filtering by year, client, or status.
+
 use clap::Args;
 use colored::Colorize;
 use eyre::Result;
@@ -11,12 +17,42 @@ use folio_core::{
 };
 use std::fs;
 
+/// List invoices in a colour-coded table with status and PDF freshness.
+///
+/// PDF state indicators:
+/// - `✓` — PDF is up to date
+/// - `~` — PDF exists but source has changed
+/// - `—` — PDF has never been built
+///
+/// Status colour coding: overdue=red, sent=yellow, paid=green, draft=dim.
+///
+/// The special status filter `unpaid` matches `draft`, `sent`, and `overdue`.
+///
+/// Examples:
+///
+/// ```sh
+/// folio list
+/// folio list --year 2026
+/// folio list --client acme
+/// folio list --status unpaid
+/// folio list --status overdue
+/// folio list --status paid
+/// ```
 #[derive(Args)]
 pub struct ListArgs {
+    /// Show only invoices for the given year.
     #[arg(long)]
     pub year: Option<i32>,
+
+    /// Show only invoices for the given client slug.
     #[arg(long)]
     pub client: Option<String>,
+
+    /// Show only invoices with the given status.
+    ///
+    /// Accepts any derived status (`draft`, `sent`, `overdue`, `paid`,
+    /// `partially_paid`, `voided`) or the special value `unpaid` (which
+    /// matches `draft`, `sent`, and `overdue`).
     #[arg(long)]
     pub status: Option<String>,
 }
@@ -25,7 +61,7 @@ pub async fn run(args: ListArgs) -> Result<()> {
     let cwd = std::env::current_dir()?;
     let root = find_root(&cwd).ok_or_else(|| eyre::eyre!("No folio.toml found"))?;
     let config = load_config(&root)?;
-    let store = FilesystemStore::new(&root);
+    let store = FilesystemStore::with_paths(&root, config.paths().clone());
 
     let filter = InvoiceFilter {
         year: args.year,
@@ -46,7 +82,7 @@ pub async fn run(args: ListArgs) -> Result<()> {
         let client = store.get_client(&invoice.client).await?;
         let computed = compute_invoice(invoice, &client, &config);
 
-        // Filter by status if requested
+        // Apply status filter if specified
         if let Some(ref status_filter) = args.status {
             let matches = match status_filter.as_str() {
                 "unpaid" => matches!(
@@ -60,10 +96,11 @@ pub async fn run(args: ListArgs) -> Result<()> {
             }
         }
 
-        // Compute PDF state
-        let template_html = get_template_html(&computed.template, &root).unwrap_or_default();
+        // Determine PDF freshness by comparing the stored hash to the current one
+        let template_html =
+            get_template_html(&computed.template, &store.templates_dir()).unwrap_or_default();
         let invoice_toml = toml::to_string(invoice).unwrap_or_default();
-        let client_path = root.join("clients").join(format!("{}.toml", client.slug));
+        let client_path = store.clients_dir().join(format!("{}.toml", client.slug));
         let client_toml = fs::read_to_string(&client_path).unwrap_or_default();
         let me_toml = toml::to_string(&config.me).unwrap_or_default();
         let hash = compute_source_hash(&invoice_toml, &client_toml, &template_html, &me_toml);

@@ -1,3 +1,10 @@
+//! `folio new` — interactive wizard for creating a new invoice.
+//!
+//! Prompts for the client (with autocomplete from `clients/`), invoice date,
+//! and line items. Auto-generates the next sequential ID based on `id_format`
+//! in `folio.toml`. Writes the invoice TOML to `invoices/{year}/{id}.toml`.
+//! Does **not** build or send — those are separate steps.
+
 use chrono::{Datelike, Local};
 use clap::Args;
 use dialoguer::{Input, Select};
@@ -10,10 +17,26 @@ use folio_core::{
 use rust_decimal::Decimal;
 use std::str::FromStr;
 
+/// Create a new invoice interactively.
+///
+/// Prompts for client, date, and line items, then writes the invoice TOML to
+/// `invoices/{year}/{id}.toml`. The next sequential ID is auto-generated from
+/// the `id_format` in `folio.toml`.
+///
+/// Examples:
+///
+/// ```sh
+/// folio new
+/// folio new --client acme
+/// folio new --client acme --date 2026-05-01
+/// ```
 #[derive(Args)]
 pub struct NewArgs {
+    /// Client slug to pre-fill (must match a file in `clients/`).
     #[arg(long)]
     pub client: Option<String>,
+
+    /// Invoice date in `YYYY-MM-DD` format (defaults to today).
     #[arg(long)]
     pub date: Option<String>,
 }
@@ -22,7 +45,7 @@ pub async fn run(args: NewArgs) -> Result<()> {
     let cwd = std::env::current_dir()?;
     let root = find_root(&cwd).ok_or_else(|| eyre::eyre!("No folio.toml found"))?;
     let config = load_config(&root)?;
-    let store = FilesystemStore::new(&root);
+    let store = FilesystemStore::with_paths(&root, config.paths().clone());
 
     // Client selection
     let client_slug = if let Some(c) = args.client {
@@ -71,7 +94,7 @@ pub async fn run(args: NewArgs) -> Result<()> {
 
     println!("Creating invoice {}", id);
 
-    // Line items
+    // Line items — loop until the user submits an empty description
     let mut items = Vec::new();
     loop {
         let desc: String = Input::new()
@@ -131,6 +154,10 @@ pub async fn run(args: NewArgs) -> Result<()> {
     Ok(())
 }
 
+/// Find the next sequential invoice number for the given year.
+///
+/// Scans existing invoices for the year, extracts the trailing numeric segment
+/// from each ID, and returns `max + 1`.
 pub async fn next_invoice_seq(store: &FilesystemStore, year: i32) -> Result<u32> {
     let filter = InvoiceFilter {
         year: Some(year),
@@ -147,6 +174,10 @@ pub async fn next_invoice_seq(store: &FilesystemStore, year: i32) -> Result<u32>
     Ok(max_seq + 1)
 }
 
+/// Format an invoice ID from a format string, replacing `{year}` and `{seq:NNN}`.
+///
+/// The `{seq:NNN}` token is zero-padded to the width implied by the number of
+/// characters in the spec (e.g. `{seq:03}` pads to 3 digits).
 pub fn format_id(format: &str, year: i32, seq: u32) -> String {
     let mut result = format.to_string();
     result = result.replace("{year}", &year.to_string());
@@ -155,7 +186,6 @@ pub fn format_id(format: &str, year: i32, seq: u32) -> String {
     if let Some(start) = result.find("{seq:") {
         if let Some(end_rel) = result[start..].find('}') {
             let spec = &result[start + 5..start + end_rel];
-            // Count leading zeros to determine width
             let width: usize = spec.len().max(1);
             let padded = format!("{:0>width$}", seq, width = width);
             result = format!(

@@ -1,12 +1,33 @@
+//! `folio init` — initialise a new folio repository.
+//!
+//! Creates the standard directory layout (`clients/`, `invoices/`, `templates/`,
+//! `output/`), writes a populated `folio.toml` from interactive prompts, adds a
+//! `.gitignore`, a starter `README.md`, and runs `git init` if the directory is
+//! not already a git repository.
+
 use clap::Args;
 use dialoguer::Input;
 use eyre::Result;
 use std::fs;
 
+/// Initialise a new folio repository in the current directory.
+///
+/// Runs an interactive prompt for your name, company, email, and address,
+/// then writes `folio.toml` and the standard directory layout.
+///
+/// Examples:
+///
+/// ```sh
+/// folio init
+/// folio init --name "Jane Doe" --company "janedoe.dev"
+/// ```
 #[derive(Args)]
 pub struct InitArgs {
+    /// Your full name (skips the interactive prompt).
     #[arg(long)]
     pub name: Option<String>,
+
+    /// Your company name or domain (skips the interactive prompt).
     #[arg(long)]
     pub company: Option<String>,
 }

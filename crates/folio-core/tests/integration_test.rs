@@ -5,7 +5,7 @@ use folio_core::{
     store::{FilesystemStore, InvoiceStore},
     types::{
         Client, Defaults, FolioConfig, Invoice, InvoiceStatus, LineItem, MeConfig, PaidInfo,
-        SentInfo, VoidedInfo,
+        PathsConfig, SentInfo, VoidedInfo,
     },
 };
 use rust_decimal::Decimal;
@@ -32,6 +32,7 @@ fn make_config() -> FolioConfig {
         },
         email: None,
         build: None,
+        paths: None,
     }
 }
 
@@ -354,4 +355,118 @@ fn test_build_index_save_load() {
         check_pdf_state(&loaded, "INV-2026-001", "abc12345"),
         PdfState::Fresh
     );
+}
+
+// ─── PathsConfig ───────────────────────────────────────────────────────────
+
+#[test]
+fn test_paths_config_defaults() {
+    let p = PathsConfig::default();
+    assert_eq!(p.clients(), "clients");
+    assert_eq!(p.invoices(), "invoices");
+    assert_eq!(p.templates(), "templates");
+    assert_eq!(p.output(), "output");
+}
+
+#[test]
+fn test_paths_config_overrides() {
+    let p = PathsConfig {
+        clients: Some("billing/clients".into()),
+        invoices: Some("billing/invoices".into()),
+        templates: Some("billing/templates".into()),
+        output: Some("billing/output".into()),
+    };
+    assert_eq!(p.clients(), "billing/clients");
+    assert_eq!(p.invoices(), "billing/invoices");
+    assert_eq!(p.templates(), "billing/templates");
+    assert_eq!(p.output(), "billing/output");
+}
+
+#[test]
+fn test_paths_config_partial_override() {
+    // Only some paths are overridden; the rest fall back to defaults.
+    let p = PathsConfig {
+        clients: Some("billing/clients".into()),
+        invoices: None,
+        templates: None,
+        output: Some("dist".into()),
+    };
+    assert_eq!(p.clients(), "billing/clients");
+    assert_eq!(p.invoices(), "invoices"); // default
+    assert_eq!(p.templates(), "templates"); // default
+    assert_eq!(p.output(), "dist");
+}
+
+/// Store created with `with_paths` reads and writes to the configured directories.
+#[tokio::test]
+async fn test_store_with_custom_paths() {
+    let dir = TempDir::new().unwrap();
+
+    let paths = PathsConfig {
+        clients: Some("billing/clients".into()),
+        invoices: Some("billing/invoices".into()),
+        templates: None,
+        output: Some("billing/output".into()),
+    };
+    let store = FilesystemStore::with_paths(dir.path(), paths);
+
+    // Clients dir should be billing/clients, not clients/
+    let client = Client {
+        name: "Test Co".into(),
+        contact: None,
+        email: "test@test.com".into(),
+        address: vec![],
+        currency: None,
+        due_days: None,
+        template: None,
+        email_opts: None,
+        notes: None,
+        slug: "test-co".into(),
+    };
+    store.save_client(&client).await.unwrap();
+
+    // File should exist at the custom path
+    assert!(dir.path().join("billing/clients/test-co.toml").exists());
+    // And NOT at the default path
+    assert!(!dir.path().join("clients/test-co.toml").exists());
+
+    let fetched = store.get_client("test-co").await.unwrap();
+    assert_eq!(fetched.name, "Test Co");
+
+    // Invoice dir should be billing/invoices
+    let inv = make_invoice("INV-2026-001", NaiveDate::from_ymd_opt(2026, 1, 1).unwrap());
+    store.save(&inv).await.unwrap();
+    assert!(dir
+        .path()
+        .join("billing/invoices/2026/INV-2026-001.toml")
+        .exists());
+    assert!(!dir.path().join("invoices/2026/INV-2026-001.toml").exists());
+
+    let loaded = store.get("INV-2026-001").await.unwrap();
+    assert_eq!(loaded.id, "INV-2026-001");
+}
+
+/// `store.output_dir()` and `store.templates_dir()` reflect the configured paths.
+#[test]
+fn test_store_path_helpers() {
+    let paths = PathsConfig {
+        clients: None,
+        invoices: None,
+        templates: Some("my/templates".into()),
+        output: Some("dist".into()),
+    };
+    let store = FilesystemStore::with_paths("/repo", paths);
+    assert_eq!(store.output_dir(), std::path::Path::new("/repo/dist"));
+    assert_eq!(
+        store.templates_dir(),
+        std::path::Path::new("/repo/my/templates")
+    );
+}
+
+/// `FolioConfig::paths()` returns sensible defaults when `[paths]` is absent.
+#[test]
+fn test_folio_config_paths_absent() {
+    let config = make_config(); // paths: None
+    assert_eq!(config.paths().clients(), "clients");
+    assert_eq!(config.paths().output(), "output");
 }

@@ -1,3 +1,9 @@
+//! `folio templates` — list and export invoice templates.
+//!
+//! With no subcommand, lists all bundled templates and any custom templates
+//! found in the `templates/` directory. The `export` subcommand copies a
+//! bundled template's source files into a local directory for editing.
+
 use clap::{Args, Subcommand};
 use eyre::Result;
 use folio_core::{
@@ -6,6 +12,18 @@ use folio_core::{
 };
 use std::path::PathBuf;
 
+/// List available templates or export a bundled one for customisation.
+///
+/// With no subcommand, prints all bundled and local custom templates.
+/// Use the `export` subcommand to copy a bundled template into your
+/// `templates/` directory so you can edit it.
+///
+/// Examples:
+///
+/// ```sh
+/// folio templates
+/// folio templates export basic --output templates/studio
+/// ```
 #[derive(Args)]
 pub struct TemplatesArgs {
     #[command(subcommand)]
@@ -14,8 +32,12 @@ pub struct TemplatesArgs {
 
 #[derive(Subcommand)]
 pub enum TemplatesCommands {
+    /// Copy a bundled template into a local directory for editing.
     Export {
+        /// Name of the bundled template to export (e.g. `basic`, `modern`).
         name: String,
+
+        /// Directory to write the template files into.
         #[arg(long)]
         output: PathBuf,
     },
@@ -38,7 +60,10 @@ pub async fn run(args: TemplatesArgs) -> Result<()> {
             }
 
             if let Some(ref root) = root {
-                let custom = list_custom(root);
+                let config = folio_core::config::load_config(root).unwrap_or_default();
+                let store =
+                    folio_core::store::FilesystemStore::with_paths(root, config.paths().clone());
+                let custom = list_custom(&store.templates_dir());
                 if !custom.is_empty() {
                     println!("\nCUSTOM (templates/)");
                     for t in &custom {

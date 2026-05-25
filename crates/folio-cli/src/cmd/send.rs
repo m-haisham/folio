@@ -1,3 +1,10 @@
+//! `folio send` — email an invoice and record the `[sent]` block.
+//!
+//! Builds the PDF if it does not already exist, then sends it as an email
+//! attachment using the provider configured in `folio.toml`. On success it
+//! writes the `[sent]` block (timestamp, recipient, method) back to the
+//! invoice TOML so the status advances from `draft` → `sent`.
+
 use chrono::Utc;
 use clap::Args;
 use eyre::Result;
@@ -11,15 +18,41 @@ use folio_core::{
     types::SentInfo,
 };
 
+/// Send an invoice by email and record the `[sent]` block.
+///
+/// Builds the PDF first if it does not exist (pass `--rebuild` to force a
+/// fresh render). The email subject and body are Tera templates defined in
+/// `folio.toml` under `[email.templates]`. The `[sent]` block is written
+/// back to the invoice TOML on success.
+///
+/// Fails if the invoice has already been sent — pass `--force` to resend.
+///
+/// Examples:
+///
+/// ```sh
+/// folio send INV-2026-001
+/// folio send INV-2026-001 --to jane@acme.com
+/// folio send INV-2026-001 --dry-run
+/// folio send INV-2026-001 --force --rebuild
+/// ```
 #[derive(Args)]
 pub struct SendArgs {
+    /// Invoice ID to send (e.g. `INV-2026-001`).
     pub id: String,
+
+    /// Override the recipient email address.
     #[arg(long)]
     pub to: Option<String>,
+
+    /// Preview the email without actually sending it.
     #[arg(long)]
     pub dry_run: bool,
+
+    /// Resend even if a `[sent]` block already exists.
     #[arg(long)]
     pub force: bool,
+
+    /// Rebuild the PDF before sending, even if it is already up to date.
     #[arg(long)]
     pub rebuild: bool,
 }
@@ -28,7 +61,7 @@ pub async fn run(args: SendArgs) -> Result<()> {
     let cwd = std::env::current_dir()?;
     let root = find_root(&cwd).ok_or_else(|| eyre::eyre!("No folio.toml found"))?;
     let config = load_config(&root)?;
-    let store = FilesystemStore::new(&root);
+    let store = FilesystemStore::with_paths(&root, config.paths().clone());
 
     let mut invoice = store.get(&args.id).await?;
 
@@ -42,8 +75,8 @@ pub async fn run(args: SendArgs) -> Result<()> {
     let client = store.get_client(&invoice.client).await?;
     let computed = compute_invoice(&invoice, &client, &config);
 
-    // Build PDF if needed
-    let pdf_path = root.join("output").join(format!("{}.pdf", args.id));
+    // Build PDF if it doesn't exist or an explicit rebuild was requested
+    let pdf_path = store.output_dir().join(format!("{}.pdf", args.id));
     if !pdf_path.exists() || args.rebuild {
         println!("Building PDF...");
         let mut index = BuildIndex::load(&root)?;
@@ -58,13 +91,14 @@ pub async fn run(args: SendArgs) -> Result<()> {
             template: None,
             output: None,
         };
-        super::build::build_one(&root, &config, &store, &mut index, &args.id, &build_args).await?;
+        super::build::build_one(&config, &store, &mut index, &args.id, &build_args).await?;
         index.save(&root)?;
     }
 
-    // Prepare email
+    // Determine recipient — flag > client email
     let to = args.to.clone().unwrap_or_else(|| client.email.clone());
 
+    // Resolve email templates with sensible defaults
     let default_subject = "Invoice {{ invoice.id }} from {{ me.company }}";
     let default_body = "Hi {{ client.contact }},\n\nPlease find attached invoice {{ invoice.id }}.\n\n{{ me.name }}\n";
 
@@ -117,7 +151,7 @@ pub async fn run(args: SendArgs) -> Result<()> {
         .await
         .map_err(|e| eyre::eyre!("{}", e))?;
 
-    // Record sent info
+    // Persist the [sent] block so the invoice status becomes "sent"
     invoice.sent = Some(SentInfo {
         at: Utc::now(),
         method: "email".to_string(),

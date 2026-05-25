@@ -32,7 +32,8 @@ pub fn compute_quote(quote: &Quote, client: &Client, config: &FolioConfig) -> Co
         .notes
         .clone()
         .or_else(|| client.defaults.as_ref().and_then(|d| d.notes.clone()))
-        .or_else(|| config.defaults.notes.clone());
+        .or_else(|| config.defaults.notes.clone())
+        .map(|n| n.trim().to_string());
 
     let expires_days = config
         .quote

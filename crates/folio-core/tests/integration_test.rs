@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use folio_core::{
     compute::{compute_invoice, derive_status},
-    index::{check_pdf_state, compute_source_hash, BuildIndex, PdfState},
+    index::{BuildIndex, PdfState, check_pdf_state, compute_source_hash},
     store::{FilesystemStore, InvoiceStore},
     types::{
         Client, Defaults, FolioConfig, Invoice, InvoiceStatus, LineItem, MeConfig, PaidInfo,
@@ -30,6 +30,7 @@ fn make_config() -> FolioConfig {
             template: Some("basic".into()),
             id_format: None,
             primary_color: None,
+            notes: None,
         },
         email: None,
         build: None,
@@ -48,6 +49,7 @@ fn make_client() -> Client {
         template: None,
         email_opts: None,
         notes: None,
+        defaults: None,
         slug: "bob-corp".into(),
     }
 }
@@ -423,6 +425,7 @@ async fn test_store_with_custom_paths() {
         template: None,
         email_opts: None,
         notes: None,
+        defaults: None,
         slug: "test-co".into(),
     };
     store.save_client(&client).await.unwrap();
@@ -438,10 +441,11 @@ async fn test_store_with_custom_paths() {
     // Invoice dir should be billing/invoices
     let inv = make_invoice("INV-2026-001", NaiveDate::from_ymd_opt(2026, 1, 1).unwrap());
     store.save(&inv).await.unwrap();
-    assert!(dir
-        .path()
-        .join("billing/invoices/2026/INV-2026-001.toml")
-        .exists());
+    assert!(
+        dir.path()
+            .join("billing/invoices/2026/INV-2026-001.toml")
+            .exists()
+    );
     assert!(!dir.path().join("invoices/2026/INV-2026-001.toml").exists());
 
     let loaded = store.get("INV-2026-001").await.unwrap();

@@ -170,7 +170,7 @@
                             text-align: left;
                         "
                     >
-                        {{ invoice.notes }}
+                        {{- invoice.notes | trim -}}
                     </div>
                 </div>
                 {% else %}

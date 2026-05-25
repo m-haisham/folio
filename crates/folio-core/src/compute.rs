@@ -38,8 +38,7 @@ pub fn compute_invoice(
         .notes
         .clone()
         .or_else(|| client.defaults.as_ref().and_then(|d| d.notes.clone()))
-        .or_else(|| config.defaults.notes.clone())
-        .map(|n| n.trim().to_string());
+        .or_else(|| config.defaults.notes.clone());
 
     let due_days = client
         .due_days

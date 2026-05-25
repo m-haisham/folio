@@ -490,3 +490,54 @@ cargo build --release
 # Run a command against a local invoices repo
 cargo run --bin folio -- list
 ```
+
+---
+
+## Testing
+
+### Unit & integration tests
+
+The standard test suite requires no external services and runs on every `cargo test`:
+
+```sh
+cargo test
+```
+
+This covers invoice computation, status derivation, filesystem store CRUD, build index staleness, and path configuration.
+
+### Email integration tests
+
+Email sending is tested against a real SMTP server using [Mailpit](https://github.com/axllent/mailpit) — a local mail-catcher that exposes an HTTP API for asserting on received messages.
+
+The tests are marked `#[ignore]` so they are **skipped** by default and must be opted into explicitly.
+
+**Prerequisites:** Docker (or Docker Desktop) must be running.
+
+```sh
+# 1. Start Mailpit
+docker compose up -d
+
+# 2. Run the email integration tests
+cargo test --test email_integration -- --ignored
+
+# 3. (Optional) Inspect received mail in the browser
+open http://localhost:8025
+
+# 4. Tear down when finished
+docker compose down
+```
+
+#### What is tested
+
+| Test | Asserts |
+|---|---|
+| `test_send_plain_email_arrives_in_mailpit` | Email is delivered with the correct subject, to/from headers, and body text |
+| `test_send_email_with_cc` | CC recipients are forwarded to the SMTP server |
+| `test_send_email_with_pdf_attachment` | Multipart messages with a PDF attachment are accepted |
+| `test_send_email_missing_smtp_config_returns_error` | A clear error is returned when `[email.smtp]` is absent from config |
+
+Each test clears the Mailpit inbox before sending and queries the [Mailpit REST API](http://localhost:8025/api/v1/messages) to verify the result. Tests run serially to avoid inbox pollution between concurrent test threads.
+
+#### Environment variables
+
+`FOLIO_SMTP_PASSWORD` does **not** need to be set for integration tests — Mailpit accepts any credentials by default.

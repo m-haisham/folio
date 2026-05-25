@@ -5,3 +5,9 @@ deploy VERSION:
     git tag {{ VERSION }}
     git push
     git push --tags
+
+up:
+    docker compose up -d
+
+down:
+    docker compose down

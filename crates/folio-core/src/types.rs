@@ -39,6 +39,9 @@ pub struct SmtpConfig {
     pub host: String,
     pub port: u16,
     pub username: String,
+    /// Set to `false` to use an unencrypted connection (e.g. local Mailpit).
+    /// Defaults to `true`.
+    pub tls: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

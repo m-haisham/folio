@@ -3,8 +3,8 @@ use crate::{
     types::{EmailConfig, FolioConfig},
 };
 use lettre::{
-    message::header::ContentType, message::MultiPart, transport::smtp::authentication::Credentials,
-    AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor,
+    AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor, message::MultiPart,
+    message::header::ContentType, transport::smtp::authentication::Credentials,
 };
 
 pub struct EmailMessage {
@@ -37,8 +37,7 @@ async fn send_smtp(email_cfg: &EmailConfig, config: &FolioConfig, msg: EmailMess
         .as_ref()
         .ok_or_else(|| FolioError::Other("SMTP config missing".to_string()))?;
 
-    let password = std::env::var("FOLIO_SMTP_PASSWORD")
-        .map_err(|_| FolioError::Other("FOLIO_SMTP_PASSWORD not set".to_string()))?;
+    let password = std::env::var("FOLIO_SMTP_PASSWORD").unwrap_or_default();
 
     let from_addr = email_cfg.from.as_deref().unwrap_or(&config.me.email);
     let from_name = email_cfg.from_name.as_deref().unwrap_or(&config.me.name);
@@ -90,11 +89,19 @@ async fn send_smtp(email_cfg: &EmailConfig, config: &FolioConfig, msg: EmailMess
     };
 
     let creds = Credentials::new(smtp.username.clone(), password);
-    let mailer = AsyncSmtpTransport::<Tokio1Executor>::relay(&smtp.host)
-        .map_err(|e| FolioError::Other(e.to_string()))?
-        .credentials(creds)
-        .port(smtp.port)
-        .build();
+    let use_tls = smtp.tls.unwrap_or(true);
+    let mailer = if use_tls {
+        AsyncSmtpTransport::<Tokio1Executor>::relay(&smtp.host)
+            .map_err(|e| FolioError::Other(e.to_string()))?
+            .credentials(creds)
+            .port(smtp.port)
+            .build()
+    } else {
+        AsyncSmtpTransport::<Tokio1Executor>::builder_dangerous(&smtp.host)
+            .credentials(creds)
+            .port(smtp.port)
+            .build()
+    };
 
     mailer
         .send(email)

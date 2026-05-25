@@ -39,6 +39,15 @@
                 width: 100%;
             }
         </style>
+        {% if theme %}
+        <style>
+            .accent { background-color: {{ theme.primary }} !important; }
+            .accent-text { color: {{ theme.primary }} !important; }
+            .accent-border { border-color: {{ theme.primary }} !important; }
+            .accent-light { background-color: {{ theme.primary_light }} !important; }
+            .accent-label { color: {{ theme.primary_mid }} !important; }
+        </style>
+        {% endif %}
     </head>
     <body class="bg-white text-gray-900">
         <!-- Top accent stripe -->
@@ -102,7 +111,8 @@
                 class="accent-light rounded-xl p-5 mb-10 inline-block min-w-52"
             >
                 <div
-                    class="text-[10px] font-bold uppercase tracking-[0.18em] text-purple-400 mb-2"
+                    class="text-[10px] font-bold uppercase tracking-[0.18em] accent-label mb-2"
+                    style="color: #7c3aed"
                 >
                     Billed To
                 </div>

@@ -27,6 +27,11 @@ pub fn compute_invoice(
         .or_else(|| config.defaults.template.clone())
         .unwrap_or_else(|| "basic".to_string());
 
+    let primary_color = invoice
+        .primary_color
+        .clone()
+        .or_else(|| config.defaults.primary_color.clone());
+
     let due_days = client.due_days.or(config.defaults.due_days).unwrap_or(30);
 
     let due = invoice
@@ -75,6 +80,7 @@ pub fn compute_invoice(
         due,
         currency,
         template,
+        primary_color,
         tax_rate,
         notes: invoice.notes.clone(),
         items: computed_items,

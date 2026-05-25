@@ -163,6 +163,7 @@ pub async fn run(args: NewArgs) -> Result<()> {
         due: None,
         currency: None,
         template: None,
+        primary_color: None,
         tax_rate: None,
         notes: None,
         items,

@@ -33,13 +33,13 @@
         <div style="padding: 48px 56px 0">
             <div
                 style="
-                    border-top: 4px solid #1a1a1a;
+                    border-top: 4px solid {% if theme %}{{ theme.primary }}{% else %}#1a1a1a{% endif %};
                     padding-top: 20px;
                     display: flex;
                     justify-content: space-between;
                     align-items: flex-end;
                     padding-bottom: 16px;
-                    border-bottom: 1.5px solid #1a1a1a;
+                    border-bottom: 1.5px solid {% if theme %}{{ theme.primary }}{% else %}#1a1a1a{% endif %};
                 "
             >
                 <div>
@@ -323,10 +323,10 @@
                         display: flex;
                         justify-content: space-between;
                         padding: 9px 0 6px;
-                        font-weight: 700;
-                        font-size: 0.95rem;
-                        border-top: 2px solid #1a1a1a;
-                        margin-top: 4px;
+                            font-weight: 700;
+                            font-size: 0.95rem;
+                            border-top: 2px solid {% if theme %}{{ theme.primary }}{% else %}#1a1a1a{% endif %};
+                            margin-top: 4px;
                     "
                 >
                     <span>Total {{ invoice.currency }}</span
@@ -390,7 +390,7 @@
                 right: 0;
                 height: 40px;
                 background: #fff;
-                border-top: 2px solid #1a1a1a;
+                border-top: 2px solid {% if theme %}{{ theme.primary }}{% else %}#1a1a1a{% endif %};
                 display: flex;
                 justify-content: center;
                 align-items: center;

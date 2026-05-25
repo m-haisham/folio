@@ -29,6 +29,7 @@ fn make_config() -> FolioConfig {
             due_days: Some(30),
             template: Some("basic".into()),
             id_format: None,
+            primary_color: None,
         },
         email: None,
         build: None,
@@ -59,6 +60,7 @@ fn make_invoice(id: &str, date: NaiveDate) -> Invoice {
         due: None,
         currency: None,
         template: None,
+        primary_color: None,
         tax_rate: None,
         notes: None,
         items: vec![LineItem {

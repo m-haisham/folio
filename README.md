@@ -82,11 +82,12 @@ address = ["123 Main St", "City, Country"]
 logo    = "assets/logo.png"   # optional
 
 [defaults]
-currency  = "USD"
-tax_rate  = 0.0               # percentage, e.g. 15.0 for 15 %
-due_days  = 30
-template  = "basic"           # bundled: basic | classic | modern | floral | slate
-id_format = "INV-{year}-{seq:03}"
+currency      = "USD"
+tax_rate      = 0.0               # percentage, e.g. 15.0 for 15 %
+due_days      = 30
+template      = "basic"           # bundled: basic | classic | modern | floral | slate | signature
+id_format     = "INV-{year}-{seq:03}"
+primary_color = "#7c3aed"         # optional — accent colour applied to all invoices
 
 [email]
 provider  = "smtp"            # smtp | sendgrid | resend
@@ -137,9 +138,10 @@ client = "acme"
 date   = "2026-05-01"
 due    = "2026-05-31"    # optional; computed from due_days if omitted
 
-currency = "USD"         # optional override
-template = "modern"      # optional override
-tax_rate = 0.0           # optional override
+currency      = "USD"         # optional override
+template      = "modern"      # optional override
+tax_rate      = 0.0           # optional override
+primary_color = "#0ea5e9"     # optional — overrides [defaults.primary_color] for this invoice
 
 notes = "Thank you!"
 
@@ -350,6 +352,56 @@ Templates are [Tera](https://tera.netlify.app/) (Jinja2-style) HTML files that u
 | `modern` | Bold accent colour, sans-serif, left-aligned logo. |
 | `floral` | Decorative botanical accents. Warm tones. |
 | `slate` | Dark header band, light body. High-contrast. |
+| `signature` | Editorial serif design. Cream paper, forest-green ink, italic accents. |
+
+### Primary colour
+
+Every bundled template supports a configurable accent/primary colour. Set it once globally or override it per-invoice:
+
+```toml
+# folio.toml — applies to every invoice
+[defaults]
+primary_color = "#0ea5e9"   # any CSS hex colour (#rgb or #rrggbb)
+```
+
+```toml
+# invoices/2026/INV-2026-001.toml — overrides the global default for this invoice only
+primary_color = "#e11d48"
+```
+
+Resolution order (most specific wins):
+
+```
+invoice.toml [primary_color]
+  ← folio.toml [defaults.primary_color]
+    ← template's built-in default colour (unchanged when neither is set)
+```
+
+From a single hex value, folio derives a small palette automatically:
+
+| Variable | Use |
+|---|---|
+| `theme.primary` | The colour itself — stripes, borders, badges, totals |
+| `theme.primary_mid` | ~20% lighter — secondary borders, mid-tone text |
+| `theme.primary_light` | ~88% lighter — card backgrounds, tinted fills |
+| `theme.primary_dark` | ~22% darker — footer bands, emphasis |
+| `theme.primary_alpha_low` | rgba at 6% opacity — subtle overlays |
+| `theme.primary_alpha_very_low` | rgba at 4% opacity — ghost decorations |
+
+Each template uses these variables in `{{ theme.primary }}` etc. and falls back to its own built-in palette when `primary_color` is not configured — so existing invoices are never affected.
+
+#### How each template uses the colour
+
+| Template | Effect |
+|---|---|
+| `basic` | Adds a 4 px top stripe; uses `primary` for the total divider |
+| `classic` | Replaces all ruled borders (header, footer, total line) |
+| `modern` | Overrides `.accent` / `.accent-text` / `.accent-light` CSS classes |
+| `floral` | Overrides all `.warm-*` CSS classes and inline palette values |
+| `slate` | Replaces `#38bdf8` accent — invoice ID, total amount, notes border, gradient stripe |
+| `signature` | Sets `--ink` / `--ink-mid` / `--ink-low` CSS custom properties |
+
+---
 
 ### Template resolution order
 
@@ -387,7 +439,16 @@ invoice
   .subtotal, .tax_amount, .total  (computed)
   .status   (computed)
   .sent, .paid  (nil if absent)
+theme       — present only when primary_color is configured
+  .primary              — the colour itself, e.g. "#0ea5e9"
+  .primary_mid          — ~20% lighter variant
+  .primary_light        — ~88% lighter tint (card backgrounds)
+  .primary_dark         — ~22% darker shade
+  .primary_alpha_low    — rgba string at 6% opacity
+  .primary_alpha_very_low — rgba string at 4% opacity
 ```
+
+In Tera templates, guard against `theme` being absent with `{% if theme %} ... {% endif %}`.
 
 ---
 

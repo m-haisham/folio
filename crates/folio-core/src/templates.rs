@@ -10,6 +10,74 @@ use tera::{Context, Tera};
 #[folder = "templates/"]
 struct BundledTemplates;
 
+/// A minimal colour palette derived from a single primary hex colour.
+/// All values are ready-to-use CSS hex strings ("#rrggbb").
+#[derive(serde::Serialize)]
+struct ThemeContext {
+    /// The primary/accent colour itself, e.g. "#7c3aed".
+    primary: String,
+    /// A very light tint (~90% white mixed), for card backgrounds.
+    primary_light: String,
+    /// A slightly lighter variant (~15% lighter), for hover or borders.
+    primary_mid: String,
+    /// A darkened variant (~20% darker), for footer bands etc.
+    primary_dark: String,
+    /// The primary colour at low opacity for transparent overlays (rgba string).
+    primary_alpha_low: String,
+    primary_alpha_very_low: String,
+}
+
+/// Parse a CSS hex color (#rrggbb or #rgb) into (r, g, b) u8 components.
+fn parse_hex(hex: &str) -> Option<(u8, u8, u8)> {
+    let h = hex.trim_start_matches('#');
+    match h.len() {
+        6 => {
+            let r = u8::from_str_radix(&h[0..2], 16).ok()?;
+            let g = u8::from_str_radix(&h[2..4], 16).ok()?;
+            let b = u8::from_str_radix(&h[4..6], 16).ok()?;
+            Some((r, g, b))
+        }
+        3 => {
+            let r = u8::from_str_radix(&h[0..1].repeat(2), 16).ok()?;
+            let g = u8::from_str_radix(&h[1..2].repeat(2), 16).ok()?;
+            let b = u8::from_str_radix(&h[2..3].repeat(2), 16).ok()?;
+            Some((r, g, b))
+        }
+        _ => None,
+    }
+}
+
+fn to_hex(r: u8, g: u8, b: u8) -> String {
+    format!("#{:02x}{:02x}{:02x}", r, g, b)
+}
+
+/// Blend a colour toward white by `amount` (0.0 = original, 1.0 = white).
+fn lighten(r: u8, g: u8, b: u8, amount: f32) -> (u8, u8, u8) {
+    let blend = |c: u8| -> u8 { (c as f32 + (255.0 - c as f32) * amount).round() as u8 };
+    (blend(r), blend(g), blend(b))
+}
+
+/// Blend a colour toward black by `amount` (0.0 = original, 1.0 = black).
+fn darken(r: u8, g: u8, b: u8, amount: f32) -> (u8, u8, u8) {
+    let blend = |c: u8| -> u8 { (c as f32 * (1.0 - amount)).round() as u8 };
+    (blend(r), blend(g), blend(b))
+}
+
+fn build_theme(primary_hex: &str) -> Option<ThemeContext> {
+    let (r, g, b) = parse_hex(primary_hex)?;
+    let (lr, lg, lb) = lighten(r, g, b, 0.88);
+    let (mr, mg, mb) = lighten(r, g, b, 0.20);
+    let (dr, dg, db) = darken(r, g, b, 0.22);
+    Some(ThemeContext {
+        primary: to_hex(r, g, b),
+        primary_light: to_hex(lr, lg, lb),
+        primary_mid: to_hex(mr, mg, mb),
+        primary_dark: to_hex(dr, dg, db),
+        primary_alpha_low: format!("rgba({},{},{},0.06)", r, g, b),
+        primary_alpha_very_low: format!("rgba({},{},{},0.04)", r, g, b),
+    })
+}
+
 pub struct TemplateInfo {
     pub name: String,
     pub description: String,
@@ -47,6 +115,13 @@ pub fn list_bundled() -> Vec<TemplateInfo> {
         TemplateInfo {
             name: "slate".into(),
             description: "Dark header band, light body. Professional and high-contrast.".into(),
+            is_bundled: true,
+            path: None,
+        },
+        TemplateInfo {
+            name: "signature".into(),
+            description: "Editorial serif design. Cream paper, forest-green ink, italic accents."
+                .into(),
             is_bundled: true,
             path: None,
         },
@@ -136,6 +211,12 @@ pub fn render_invoice_html(
     ctx.insert("invoice", invoice);
     ctx.insert("client", client);
     ctx.insert("me", me);
+
+    if let Some(ref color) = invoice.primary_color {
+        if let Some(theme) = build_theme(color) {
+            ctx.insert("theme", &theme);
+        }
+    }
 
     Ok(tera.render("invoice.html", &ctx)?)
 }

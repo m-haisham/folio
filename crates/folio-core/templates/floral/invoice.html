@@ -48,6 +48,18 @@
                 border-color: #c8956c;
             }
         </style>
+        {% if theme %}
+        <style>
+            /* Override warm palette with configured primary color */
+            .warm-dark  { color: {{ theme.primary }} !important; }
+            .warm-mid   { color: {{ theme.primary_mid }} !important; }
+            .warm-light { color: {{ theme.primary_mid }} !important; }
+            .warm-border { border-color: {{ theme.primary_mid }} !important; }
+            .warm-bg    { background: {{ theme.primary_light }} !important; }
+            .warm-deep  { background: {{ theme.primary_dark }} !important; }
+            .warm-rule  { border-color: {{ theme.primary_mid }} !important; }
+        </style>
+        {% endif %}
     </head>
     <body>
         <!-- ── Header band ───────────────────────────────────────────── -->
@@ -225,7 +237,7 @@
             <div
                 class="warm-bg"
                 style="
-                    border: 1px solid #d4a574;
+                    border: 1px solid {% if theme %}{{ theme.primary_mid }}{% else %}#d4a574{% endif %};
                     border-radius: 8px;
                     padding: 16px 20px;
                     margin-bottom: 32px;
@@ -239,7 +251,7 @@
                         font-weight: 700;
                         text-transform: uppercase;
                         letter-spacing: 0.16em;
-                        color: #a0522d;
+                        color: {% if theme %}{{ theme.primary }}{% else %}#a0522d{% endif %};
                         margin-bottom: 6px;
                     "
                 >
@@ -273,7 +285,9 @@
                 "
             >
                 <thead>
-                    <tr style="border-bottom: 2px solid #c8956c">
+                    <tr
+                        style="border-bottom: 2px solid {% if theme %}{{ theme.primary_mid }}{% else %}#c8956c{% endif %}"
+                    >
                         <th
                             style="
                                 text-align: left;
@@ -282,7 +296,7 @@
                                 font-weight: 700;
                                 text-transform: uppercase;
                                 letter-spacing: 0.14em;
-                                color: #a0522d;
+                                color: {% if theme %}{{ theme.primary }}{% else %}#a0522d{% endif %};
                                 font-style: normal;
                             "
                         >
@@ -296,7 +310,7 @@
                                 font-weight: 700;
                                 text-transform: uppercase;
                                 letter-spacing: 0.14em;
-                                color: #a0522d;
+                                color: {% if theme %}{{ theme.primary }}{% else %}#a0522d{% endif %};
                             "
                         >
                             Qty
@@ -309,7 +323,7 @@
                                 font-weight: 700;
                                 text-transform: uppercase;
                                 letter-spacing: 0.14em;
-                                color: #a0522d;
+                                color: {% if theme %}{{ theme.primary }}{% else %}#a0522d{% endif %};
                             "
                         >
                             Rate
@@ -322,7 +336,7 @@
                                 font-weight: 700;
                                 text-transform: uppercase;
                                 letter-spacing: 0.14em;
-                                color: #a0522d;
+                                color: {% if theme %}{{ theme.primary }}{% else %}#a0522d{% endif %};
                             "
                         >
                             Amount
@@ -331,7 +345,9 @@
                 </thead>
                 <tbody>
                     {% for item in invoice.items %}
-                    <tr style="border-bottom: 1px dashed #e8c99a">
+                    <tr
+                        style="border-bottom: 1px dashed {% if theme %}{{ theme.primary_light }}{% else %}#e8c99a{% endif %}"
+                    >
                         <td style="padding: 10px 8px 10px 0; color: #2d1f14">
                             {{ item.description }} {% if item.unit %}<em
                                 style="color: #b8875e; font-size: 0.75rem"
@@ -362,7 +378,7 @@
                                 padding: 10px 0 10px 8px;
                                 text-align: right;
                                 font-weight: 600;
-                                color: #7c3516;
+                                color: {% if theme %}{{ theme.primary }}{% else %}#7c3516{% endif %};
                             "
                         >
                             {{ invoice.currency }} {{ item.total }}
@@ -386,8 +402,8 @@
                             display: flex;
                             justify-content: space-between;
                             padding: 5px 0;
-                            color: #a0522d;
-                            border-bottom: 1px solid #e8c99a;
+                            color: {% if theme %}{{ theme.primary }}{% else %}#a0522d{% endif %};
+                            border-bottom: 1px solid {% if theme %}{{ theme.primary_light }}{% else %}#e8c99a{% endif %};
                         "
                     >
                         <span>Subtotal</span
@@ -401,8 +417,8 @@
                             display: flex;
                             justify-content: space-between;
                             padding: 5px 0;
-                            color: #a0522d;
-                            border-bottom: 1px solid #e8c99a;
+                            color: {% if theme %}{{ theme.primary }}{% else %}#a0522d{% endif %};
+                            border-bottom: 1px solid {% if theme %}{{ theme.primary_light }}{% else %}#e8c99a{% endif %};
                         "
                     >
                         <span>Tax ({{ invoice.tax_rate }}%)</span
@@ -419,8 +435,8 @@
                             padding: 10px 0 6px;
                             font-weight: 700;
                             font-size: 1rem;
-                            color: #7c3516;
-                            border-top: 2px solid #c8956c;
+                            color: {% if theme %}{{ theme.primary }}{% else %}#7c3516{% endif %};
+                            border-top: 2px solid {% if theme %}{{ theme.primary_mid }}{% else %}#c8956c{% endif %};
                             margin-top: 4px;
                         "
                     >
@@ -467,7 +483,7 @@
                 style="
                     font-size: 0.8rem;
                     color: #a0522d;
-                    border-top: 1px solid #d4a574;
+                    border-top: 1px solid {% if theme %}{{ theme.primary_mid }}{% else %}#d4a574{% endif %};
                     padding-top: 14px;
                     font-style: italic;
                 "

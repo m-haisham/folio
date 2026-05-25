@@ -23,6 +23,11 @@
         </style>
     </head>
     <body class="bg-white text-gray-900 font-sans">
+        {% if theme %}
+        <div
+            style="height: 4px; width: 100%; background: {{ theme.primary }}"
+        ></div>
+        {% endif %}
         <div style="padding: 48px 56px 36px">
             <!-- Header -->
             <div class="flex justify-between items-start mb-12">
@@ -165,7 +170,7 @@
                     {% endif %}
                     <div
                         class="flex justify-between pt-3 mt-1 font-bold text-base"
-                        style="border-top: 2px solid #111827"
+                        style="border-top: 2px solid {% if theme %}{{ theme.primary }}{% else %}#111827{% endif %}"
                     >
                         <span>Total</span>
                         <span>{{ invoice.currency }} {{ invoice.total }}</span>

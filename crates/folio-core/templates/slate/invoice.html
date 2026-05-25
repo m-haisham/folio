@@ -28,6 +28,12 @@
                 width: 100%;
             }
         </style>
+        {% if theme %}
+        <style>
+            .slate-accent { color: {{ theme.primary }} !important; }
+            .slate-accent-border { border-left-color: {{ theme.primary }} !important; }
+        </style>
+        {% endif %}
     </head>
     <body class="bg-white">
         <!-- ── Dark header ────────────────────────────────────────────── -->
@@ -50,7 +56,7 @@
                     width: 220px;
                     height: 220px;
                     border-radius: 50%;
-                    background: rgba(56, 189, 248, 0.06);
+                    background: {% if theme %}{{ theme.primary_alpha_low }}{% else %}rgba(56, 189, 248, 0.06){% endif %};
                 "
             ></div>
             <div
@@ -61,7 +67,7 @@
                     width: 100px;
                     height: 100px;
                     border-radius: 50%;
-                    background: rgba(56, 189, 248, 0.04);
+                    background: {% if theme %}{{ theme.primary_alpha_very_low }}{% else %}rgba(56, 189, 248, 0.04){% endif %};
                 "
             ></div>
 
@@ -142,7 +148,7 @@
                         style="
                             font-size: 1.6rem;
                             font-weight: 900;
-                            color: #38bdf8;
+                            color: {% if theme %}{{ theme.primary }}{% else %}#38bdf8{% endif %};
                             letter-spacing: -0.02em;
                             line-height: 1;
                         "
@@ -178,7 +184,7 @@
         <div
             style="
                 height: 3px;
-                background: linear-gradient(90deg, #38bdf8, #818cf8);
+                background: {% if theme %}{{ theme.primary }}{% else %}linear-gradient(90deg, #38bdf8, #818cf8){% endif %};
             "
         ></div>
 
@@ -388,7 +394,7 @@
                             style="
                                 font-weight: 900;
                                 font-size: 1.1rem;
-                                color: #38bdf8;
+                                color: {% if theme %}{{ theme.primary }}{% else %}#38bdf8{% endif %};
                             "
                             >{{ invoice.currency }} {{ invoice.total }}</span
                         >
@@ -435,7 +441,7 @@
                     margin-top: 32px;
                     padding: 14px 18px;
                     background: #f8fafc;
-                    border-left: 3px solid #38bdf8;
+                    border-left: 3px solid {% if theme %}{{ theme.primary }}{% else %}#38bdf8{% endif %};
                     border-radius: 0 6px 6px 0;
                     font-size: 0.8rem;
                     color: #475569;

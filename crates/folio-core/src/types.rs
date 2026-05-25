@@ -18,6 +18,9 @@ pub struct Defaults {
     pub due_days: Option<u32>,
     pub template: Option<String>,
     pub id_format: Option<String>,
+    /// Primary/accent color as a CSS hex string, e.g. "#7c3aed".
+    /// Overrides the template's built-in default when set.
+    pub primary_color: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -186,6 +189,8 @@ pub struct Invoice {
     pub due: Option<NaiveDate>,
     pub currency: Option<String>,
     pub template: Option<String>,
+    /// Per-invoice primary color override (takes priority over defaults).
+    pub primary_color: Option<String>,
     pub tax_rate: Option<Decimal>,
     pub notes: Option<String>,
     #[serde(rename = "items", default)]
@@ -226,6 +231,8 @@ pub struct ComputedInvoice {
     pub due: NaiveDate,
     pub currency: String,
     pub template: String,
+    /// Resolved primary color (may be None if neither the invoice nor defaults set one).
+    pub primary_color: Option<String>,
     pub tax_rate: Decimal,
     pub notes: Option<String>,
     pub items: Vec<ComputedLineItem>,

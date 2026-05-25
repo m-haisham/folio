@@ -88,6 +88,10 @@ due_days      = 30
 template      = "basic"           # bundled: basic | classic | modern | floral | slate | signature
 id_format     = "INV-{year}-{seq:03}"
 primary_color = "#7c3aed"         # optional — accent colour applied to all invoices
+notes         = """               # optional — default notes on every invoice
+Bank: First National Bank
+Account: 1234567890
+"""
 
 [email]
 provider  = "smtp"            # smtp | sendgrid | resend
@@ -128,6 +132,14 @@ cc  = ["finance@acme.com"]
 bcc = ["you@yourcompany.dev"]
 
 notes = "Net-14. Contact AP for payment queries."
+
+[defaults]
+notes = """
+Payment details:
+Bank: First National Bank
+Account: 1234567890
+Routing: 021000021
+"""
 ```
 
 ### `invoices/2026/INV-2026-001.toml`
@@ -438,7 +450,8 @@ Every template receives:
 me          — from folio.toml [me]
 client      — from clients/{slug}.toml
 invoice
-  .id, .date, .due, .currency, .tax_rate, .notes
+  .id, .date, .due, .currency, .tax_rate
+  .notes    (resolved: invoice → client [defaults].notes → folio.toml [defaults].notes)
   .items[]  — .description, .quantity, .unit, .rate, .total (computed)
   .subtotal, .tax_amount, .total  (computed)
   .status   (computed)

@@ -235,6 +235,7 @@ async fn create_client_interactive(store: &FilesystemStore) -> Result<String> {
         template: None,
         email_opts: None,
         notes: None,
+        defaults: None,
         slug: slug.clone(),
     };
 

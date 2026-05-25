@@ -21,6 +21,8 @@ pub struct Defaults {
     /// Primary/accent color as a CSS hex string, e.g. "#7c3aed".
     /// Overrides the template's built-in default when set.
     pub primary_color: Option<String>,
+    /// Default notes appended to every invoice when the invoice itself has no notes.
+    pub notes: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -142,9 +144,19 @@ pub struct Client {
     #[serde(rename = "email_opts", default)]
     pub email_opts: Option<ClientEmailOpts>,
     pub notes: Option<String>,
+    /// Per-client invoice defaults.
+    pub defaults: Option<ClientDefaults>,
     /// Not stored in file — set after loading
     #[serde(skip)]
     pub slug: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ClientDefaults {
+    /// Default notes for invoices raised against this client (e.g. payment details).
+    /// Takes priority over `[defaults].notes` in `folio.toml` but loses to a
+    /// note written directly on the invoice.
+    pub notes: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

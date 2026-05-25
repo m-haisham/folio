@@ -32,6 +32,13 @@ pub fn compute_invoice(
         .clone()
         .or_else(|| config.defaults.primary_color.clone());
 
+    // Notes resolution: invoice → client [defaults].notes → folio.toml [defaults].notes
+    let notes = invoice
+        .notes
+        .clone()
+        .or_else(|| client.defaults.as_ref().and_then(|d| d.notes.clone()))
+        .or_else(|| config.defaults.notes.clone());
+
     let due_days = client.due_days.or(config.defaults.due_days).unwrap_or(30);
 
     let due = invoice
@@ -82,7 +89,7 @@ pub fn compute_invoice(
         template,
         primary_color,
         tax_rate,
-        notes: invoice.notes.clone(),
+        notes,
         items: computed_items,
         subtotal,
         tax_amount,

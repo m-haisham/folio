@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- `[defaults].notes` in `folio.toml` — a global fallback note rendered on every invoice that does not define its own `notes`.
+- `[defaults].notes` in `clients/{slug}.toml` — a per-client fallback (e.g. payment details) that takes priority over the global default but loses to a note written directly on the invoice.
+- Resolution order: `invoice.notes` → `client [defaults].notes` → `folio.toml [defaults].notes`.
+
 ## [0.1.0] - 2026-05-25
 
 ### Added

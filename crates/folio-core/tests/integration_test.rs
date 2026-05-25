@@ -301,21 +301,24 @@ async fn test_store_filter_by_client() {
 
 #[test]
 fn test_source_hash_deterministic() {
-    let h1 = compute_source_hash("invoice", "client", "template", "me");
-    let h2 = compute_source_hash("invoice", "client", "template", "me");
+    let cfg = make_config();
+    let h1 = compute_source_hash("invoice", "client", "template", &cfg);
+    let h2 = compute_source_hash("invoice", "client", "template", &cfg);
     assert_eq!(h1, h2);
 }
 
 #[test]
 fn test_source_hash_changes_on_diff_input() {
-    let h1 = compute_source_hash("invoice-v1", "client", "template", "me");
-    let h2 = compute_source_hash("invoice-v2", "client", "template", "me");
+    let cfg = make_config();
+    let h1 = compute_source_hash("invoice-v1", "client", "template", &cfg);
+    let h2 = compute_source_hash("invoice-v2", "client", "template", &cfg);
     assert_ne!(h1, h2);
 }
 
 #[test]
 fn test_source_hash_is_8_hex_chars() {
-    let h = compute_source_hash("a", "b", "c", "d");
+    let cfg = make_config();
+    let h = compute_source_hash("a", "b", "c", &cfg);
     assert_eq!(h.len(), 8);
     assert!(h.chars().all(|c| c.is_ascii_hexdigit()));
 }

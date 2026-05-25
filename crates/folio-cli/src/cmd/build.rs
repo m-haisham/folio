@@ -145,8 +145,7 @@ pub async fn build_one(
     let invoice_toml = toml::to_string(&invoice)?;
     let client_path = store.clients_dir().join(format!("{}.toml", client.slug));
     let client_toml = fs::read_to_string(&client_path).unwrap_or_default();
-    let me_toml = toml::to_string(&config.me)?;
-    let source_hash = compute_source_hash(&invoice_toml, &client_toml, &template_html, &me_toml);
+    let source_hash = compute_source_hash(&invoice_toml, &client_toml, &template_html, config);
 
     let output_path = args
         .output

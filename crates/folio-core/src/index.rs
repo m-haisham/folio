@@ -1,4 +1,4 @@
-use crate::error::Result;
+use crate::{error::Result, types::FolioConfig};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -55,16 +55,26 @@ fn index_path(root: &Path) -> PathBuf {
 }
 
 pub fn compute_source_hash(
-    invoice_toml: &str,
+    document_toml: &str,
     client_toml: &str,
     template_html: &str,
-    me_toml: &str,
+    config: &FolioConfig,
 ) -> String {
+    // Serialize only the sections that affect rendered output.
+    // [email], [build], and [paths] are intentionally excluded.
+    let me_toml = toml::to_string(&config.me).unwrap_or_default();
+    let defaults_toml = toml::to_string(&config.defaults).unwrap_or_default();
+    let invoice_defaults_toml = toml::to_string(&config.invoice).unwrap_or_default();
+    let quote_defaults_toml = toml::to_string(&config.quote).unwrap_or_default();
+
     let mut hasher = Sha256::new();
-    hasher.update(invoice_toml.as_bytes());
+    hasher.update(document_toml.as_bytes());
     hasher.update(client_toml.as_bytes());
     hasher.update(template_html.as_bytes());
     hasher.update(me_toml.as_bytes());
+    hasher.update(defaults_toml.as_bytes());
+    hasher.update(invoice_defaults_toml.as_bytes());
+    hasher.update(quote_defaults_toml.as_bytes());
     let result = hasher.finalize();
     hex::encode(&result[..4])
 }

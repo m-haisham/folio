@@ -268,8 +268,7 @@ async fn list(args: QuoteListArgs) -> Result<()> {
         let quote_toml = toml::to_string(quote).unwrap_or_default();
         let client_path = store.clients_dir().join(format!("{}.toml", client.slug));
         let client_toml = fs::read_to_string(&client_path).unwrap_or_default();
-        let me_toml = toml::to_string(&config.me).unwrap_or_default();
-        let hash = compute_source_hash(&quote_toml, &client_toml, &template_html, &me_toml);
+        let hash = compute_source_hash(&quote_toml, &client_toml, &template_html, &config);
 
         let pdf_indicator = match check_pdf_state(&index, &quote.id, &hash) {
             PdfState::Fresh => "✓",
@@ -365,8 +364,7 @@ pub async fn build_quote_one(
     let quote_toml = toml::to_string(&quote)?;
     let client_path = store.clients_dir().join(format!("{}.toml", client.slug));
     let client_toml = fs::read_to_string(&client_path).unwrap_or_default();
-    let me_toml = toml::to_string(&config.me)?;
-    let source_hash = compute_source_hash(&quote_toml, &client_toml, &template_html, &me_toml);
+    let source_hash = compute_source_hash(&quote_toml, &client_toml, &template_html, config);
 
     let output_path = store.output_dir().join(format!("{}.pdf", id));
 

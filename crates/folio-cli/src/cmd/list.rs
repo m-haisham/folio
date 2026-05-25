@@ -112,9 +112,8 @@ pub async fn run(args: ListArgs) -> Result<()> {
                 let invoice_toml = toml::to_string(invoice).unwrap_or_default();
                 let client_path = store.clients_dir().join(format!("{}.toml", client.slug));
                 let client_toml = fs::read_to_string(&client_path).unwrap_or_default();
-                let me_toml = toml::to_string(&config.me).unwrap_or_default();
                 let hash =
-                    compute_source_hash(&invoice_toml, &client_toml, &template_html, &me_toml);
+                    compute_source_hash(&invoice_toml, &client_toml, &template_html, &config);
 
                 let pdf_indicator = match check_pdf_state(&index, &invoice.id, &hash) {
                     PdfState::Fresh => "✓",
@@ -178,8 +177,7 @@ pub async fn run(args: ListArgs) -> Result<()> {
                 let quote_toml = toml::to_string(quote).unwrap_or_default();
                 let client_path = store.clients_dir().join(format!("{}.toml", client.slug));
                 let client_toml = fs::read_to_string(&client_path).unwrap_or_default();
-                let me_toml = toml::to_string(&config.me).unwrap_or_default();
-                let hash = compute_source_hash(&quote_toml, &client_toml, &template_html, &me_toml);
+                let hash = compute_source_hash(&quote_toml, &client_toml, &template_html, &config);
 
                 let pdf_indicator = match check_pdf_state(&index, &quote.id, &hash) {
                     PdfState::Fresh => "✓",
@@ -253,9 +251,8 @@ pub async fn run(args: ListArgs) -> Result<()> {
                 let invoice_toml = toml::to_string(invoice).unwrap_or_default();
                 let client_path = store.clients_dir().join(format!("{}.toml", client.slug));
                 let client_toml = fs::read_to_string(&client_path).unwrap_or_default();
-                let me_toml = toml::to_string(&config.me).unwrap_or_default();
                 let hash =
-                    compute_source_hash(&invoice_toml, &client_toml, &template_html, &me_toml);
+                    compute_source_hash(&invoice_toml, &client_toml, &template_html, &config);
 
                 let pdf_indicator = match check_pdf_state(&index, &invoice.id, &hash) {
                     PdfState::Fresh => "✓",
@@ -302,8 +299,7 @@ pub async fn run(args: ListArgs) -> Result<()> {
                 let quote_toml = toml::to_string(quote).unwrap_or_default();
                 let client_path = store.clients_dir().join(format!("{}.toml", client.slug));
                 let client_toml = fs::read_to_string(&client_path).unwrap_or_default();
-                let me_toml = toml::to_string(&config.me).unwrap_or_default();
-                let hash = compute_source_hash(&quote_toml, &client_toml, &template_html, &me_toml);
+                let hash = compute_source_hash(&quote_toml, &client_toml, &template_html, &config);
 
                 let pdf_indicator = match check_pdf_state(&index, &quote.id, &hash) {
                     PdfState::Fresh => "✓",

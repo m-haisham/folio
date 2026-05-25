@@ -1,14 +1,6 @@
 //! `folio update` — self-update folio to the latest release.
-//!
-//! Checks GitHub releases for a newer version of folio and installs it in
-//! place. The update is performed by axoupdater, which downloads and runs the
-//! upstream installer script.
-//!
-//! If the binary was installed via a cargo-dist installer (which writes an
-//! install receipt), the receipt is used automatically. Otherwise, the release
-//! source is configured directly from the embedded repository metadata.
 
-use axoupdater::{AxoUpdater, ReleaseSource, ReleaseSourceType};
+use axoupdater::{AxoUpdater, ReleaseSource, ReleaseSourceType, Version};
 use clap::Args;
 use eyre::Result;
 
@@ -33,10 +25,11 @@ pub struct UpdateArgs {
 pub async fn run(args: UpdateArgs) -> Result<()> {
     let mut updater = AxoUpdater::new_for("folio");
 
-    // Try to load a cargo-dist install receipt first. If none exists (e.g. the
-    // binary was installed with `cargo install`), fall back to configuring the
-    // release source manually from the embedded repository metadata.
-    if updater.load_receipt().is_err() {
+    // is_update_needed() returns false without a receipt (can't verify the
+    // install prefix), so track whether one was found to handle that below.
+    let has_receipt = updater.load_receipt().is_ok();
+
+    if !has_receipt {
         updater.set_release_source(ReleaseSource {
             release_type: ReleaseSourceType::GitHub,
             owner: "m-haisham".to_string(),
@@ -54,33 +47,58 @@ pub async fn run(args: UpdateArgs) -> Result<()> {
             .map_err(|e| eyre::eyre!("could not set current version: {}", e))?;
     }
 
+    let current_str = env!("CARGO_PKG_VERSION");
+    let current_version: Version = current_str
+        .parse()
+        .map_err(|e| eyre::eyre!("could not parse current version '{}': {}", current_str, e))?;
+
+    // query_new_version() returns the latest release regardless of whether
+    // it's newer — clone immediately to free the borrow on `updater`.
+    let latest: Option<Version> = updater
+        .query_new_version()
+        .await
+        .map_err(|e| eyre::eyre!("could not check for updates: {}", e))?
+        .cloned();
+
+    let update_available = latest.as_ref().map_or(false, |v| v > &current_version);
+
     if args.check {
-        // --check: report whether an update is available, then exit.
-        match updater.query_new_version().await {
-            Ok(Some(new_ver)) => {
-                let current = env!("CARGO_PKG_VERSION");
-                println!("update available: {} → {}", current, new_ver);
-                println!(
-                    "run {} to install it.",
-                    colored::Colorize::bold("`folio update`")
-                );
-            }
-            Ok(None) => {
-                println!(
-                    "{} folio {} is up to date.",
-                    colored::Colorize::green("✓"),
-                    env!("CARGO_PKG_VERSION")
-                );
-            }
-            Err(e) => {
-                return Err(eyre::eyre!("could not check for updates: {}", e));
-            }
+        if update_available {
+            println!(
+                "update available: {} → {}",
+                current_str,
+                latest.as_ref().unwrap()
+            );
+            println!(
+                "run {} to install it.",
+                colored::Colorize::bold("`folio update`")
+            );
+        } else {
+            println!(
+                "{} folio {} is up to date.",
+                colored::Colorize::green("✓"),
+                current_str
+            );
         }
         return Ok(());
     }
 
-    // Full update: download and install.
     println!("checking for updates…");
+
+    if !update_available {
+        println!(
+            "{} folio {} is already up to date.",
+            colored::Colorize::green("✓"),
+            current_str
+        );
+        return Ok(());
+    }
+
+    // Without a receipt, bypass the install-prefix check since we've already
+    // confirmed a newer version exists.
+    if !has_receipt {
+        updater.always_update(true);
+    }
 
     match updater.run().await {
         Ok(Some(_)) => {
@@ -93,7 +111,7 @@ pub async fn run(args: UpdateArgs) -> Result<()> {
             println!(
                 "{} folio {} is already up to date.",
                 colored::Colorize::green("✓"),
-                env!("CARGO_PKG_VERSION")
+                current_str
             );
         }
         Err(e) => {

@@ -2,6 +2,9 @@
 members = ["crates/folio-core", "crates/folio-cli"]
 resolver = "2"
 
+[workspace.package]
+repository = "https://github.com/m-haisham/folio"
+
 [workspace.dependencies]
 serde = { version = "1", features = ["derive"] }
 toml = "0.8"
@@ -16,3 +19,8 @@ opt-level = "z"
 strip = true
 codegen-units = 1
 panic = "abort"
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"

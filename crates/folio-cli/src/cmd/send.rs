@@ -11,7 +11,7 @@ use eyre::Result;
 use folio_core::{
     compute::compute_invoice,
     config::{find_root, load_config},
-    email::{send_email, EmailMessage},
+    email::{EmailMessage, send_email},
     index::BuildIndex,
     store::{FilesystemStore, InvoiceStore},
     templates::{render_email_body, render_email_subject},
@@ -27,6 +27,11 @@ use folio_core::{
 ///
 /// Fails if the invoice has already been sent — pass `--force` to resend.
 ///
+/// Pass `--manual` to skip the email entirely and just record the `[sent]`
+/// block with `method = "manual"`. Useful when an invoice was delivered
+/// outside of folio (e.g. printed and handed over, or sent from another
+/// mail client).
+///
 /// Examples:
 ///
 /// ```sh
@@ -34,6 +39,8 @@ use folio_core::{
 /// folio send INV-2026-001 --to jane@acme.com
 /// folio send INV-2026-001 --dry-run
 /// folio send INV-2026-001 --force --rebuild
+/// folio send INV-2026-001 --manual
+/// folio send INV-2026-001 --manual --to jane@acme.com
 /// ```
 #[derive(Args)]
 pub struct SendArgs {
@@ -55,6 +62,11 @@ pub struct SendArgs {
     /// Rebuild the PDF before sending, even if it is already up to date.
     #[arg(long)]
     pub rebuild: bool,
+
+    /// Mark the invoice as sent without emailing it (method = "manual").
+    /// Use this when the invoice was delivered outside of folio.
+    #[arg(long)]
+    pub manual: bool,
 }
 
 pub async fn run(args: SendArgs) -> Result<()> {
@@ -100,6 +112,19 @@ pub async fn run(args: SendArgs) -> Result<()> {
 
     // Determine recipient — flag > client email
     let to = args.to.clone().unwrap_or_else(|| client.email.clone());
+
+    // ── Manual mode: skip email, just stamp the [sent] block ──────────────
+    if args.manual {
+        invoice.sent = Some(SentInfo {
+            at: Utc::now(),
+            method: "manual".to_string(),
+            to,
+            cc: None,
+        });
+        store.save(&invoice).await?;
+        println!("✓ Invoice {} marked as sent (manual)", args.id);
+        return Ok(());
+    }
 
     // Resolve email templates with sensible defaults
     let default_subject = "Invoice {{ invoice.id }} from {{ me.company }}";

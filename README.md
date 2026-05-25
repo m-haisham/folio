@@ -246,9 +246,13 @@ folio send INV-2026-001
 folio send INV-2026-001 --to jane@acme.com
 folio send INV-2026-001 --dry-run
 folio send INV-2026-001 --force --rebuild
+folio send INV-2026-001 --manual
+folio send INV-2026-001 --manual --to jane@acme.com
 ```
 
 Builds the PDF first if it does not exist. Writes the `[sent]` block on success. Fails if already sent (use `--force` to overwrite).
+
+Pass `--manual` to skip the email and record `method = "manual"` instead. Useful when the invoice was delivered outside of folio (printed, handed over, or sent from another mail client). `--to` can still be used to set the recipient recorded in the `[sent]` block.
 
 ---
 

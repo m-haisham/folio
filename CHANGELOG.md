@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `folio init` — initialise a new folio repository with `folio.toml`, directory scaffold, `.gitignore`, and `git init`.
 - `folio new` — interactive invoice creation with auto-generated sequential IDs; inline client creation if the client does not exist yet.
 - `folio build` — render invoices to PDF via headless Chrome/Chromium, with a content-hash cache to skip unchanged invoices. Supports `--all`, `--year`, `--client`, `--status`, `--force`, and `--open` flags.
-- `folio send` — email an invoice via SMTP, SendGrid, or Resend and append a `[sent]` block to the invoice file.
+- `folio send` — email an invoice via SMTP, SendGrid, or Resend and append a `[sent]` block to the invoice file. Pass `--manual` to skip the email and record `method = "manual"` instead (for invoices delivered outside of folio).
 - `folio paid` — mark an invoice as paid with optional `--amount`, `--method`, `--ref`, and `--date` flags.
 - `folio void` — void an invoice with an optional `--reason`.
 - `folio list` — colour-coded table of invoices showing ID, client, dates, total, status, and PDF freshness indicator.

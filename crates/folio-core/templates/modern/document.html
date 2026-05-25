@@ -2,7 +2,9 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <title>Invoice {{ invoice.id }}</title>
+        <title>
+            {{ document_type | default(value="Invoice") }} {{ invoice.id }}
+        </title>
         <script src="https://cdn.tailwindcss.com"></script>
         <style>
             @page {
@@ -97,7 +99,7 @@
                             >
                         </div>
                         <div>
-                            Due
+                            {{ due_label | default(value="Due") }}
                             <span class="font-bold text-gray-900"
                                 >{{ invoice.due }}</span
                             >

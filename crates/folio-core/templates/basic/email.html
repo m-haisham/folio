@@ -1,0 +1,9 @@
+Hi {% if client.contact %}{{ client.contact }}{% else %}there{% endif %},
+
+Please find attached {{ document_type | lower }} {{ invoice.id }} for {{ invoice.currency }} {{ invoice.total }}.
+{% if document_type == "Invoice" %}Payment is due {{ invoice.due }}.{% else %}This quote is valid until {{ invoice.due }}.{% endif %}
+{% if invoice.notes %}
+{{ invoice.notes }}
+{% endif %}
+{{ me.name }}{% if me.company %} · {{ me.company }}{% endif %}
+{{ me.email }}

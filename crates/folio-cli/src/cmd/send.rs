@@ -14,7 +14,7 @@ use folio_core::{
     email::{EmailMessage, send_email},
     index::BuildIndex,
     store::{FilesystemStore, InvoiceStore},
-    templates::{render_email_body, render_email_subject},
+    templates::{get_email_template, render_email_body, render_email_subject},
     types::SentInfo,
 };
 
@@ -75,6 +75,21 @@ pub async fn run(args: SendArgs) -> Result<()> {
     let config = load_config(&root)?;
     let store = FilesystemStore::with_paths(&root, config.paths().clone());
 
+    // Auto-detect: if this ID belongs to a quote, dispatch to quote send
+    if !store.invoice_path(&args.id).exists() && store.quote_path(&args.id).exists() {
+        return crate::cmd::quote::run(crate::cmd::quote::QuoteArgs {
+            command: crate::cmd::quote::QuoteCommand::Send(crate::cmd::quote::QuoteSendArgs {
+                id: args.id,
+                to: args.to,
+                dry_run: args.dry_run,
+                force: args.force,
+                rebuild: args.rebuild,
+                manual: args.manual,
+            }),
+        })
+        .await;
+    }
+
     let mut invoice = store
         .get(&args.id)
         .await
@@ -127,7 +142,7 @@ pub async fn run(args: SendArgs) -> Result<()> {
     }
 
     // Resolve email templates with sensible defaults
-    let default_subject = "Invoice {{ invoice.id }} from {{ me.company }}";
+    let default_subject = "{{ document_type }} {{ invoice.id }} from {{ me.company }}";
     let default_body = "Hi {{ client.contact }},\n\nPlease find attached invoice {{ invoice.id }}.\n\n{{ me.name }}\n";
 
     let email_config = config.email.as_ref();
@@ -135,15 +150,23 @@ pub async fn run(args: SendArgs) -> Result<()> {
         .and_then(|e| e.templates.as_ref())
         .and_then(|t| t.subject.as_deref())
         .unwrap_or(default_subject);
-    let body_tpl = email_config
-        .and_then(|e| e.templates.as_ref())
-        .and_then(|t| t.body.as_deref())
-        .unwrap_or(default_body);
+    let template_email = get_email_template(&computed.template, &store.templates_dir());
+    let body_tpl_str;
+    let body_tpl = if let Some(ref tpl) = template_email {
+        tpl.as_str()
+    } else {
+        body_tpl_str = email_config
+            .and_then(|e| e.templates.as_ref())
+            .and_then(|t| t.body.clone())
+            .unwrap_or_else(|| default_body.to_string());
+        &body_tpl_str
+    };
 
     let client_json = serde_json::to_value(&client)?;
-    let subject = render_email_subject(subject_tpl, &computed, &config.me)
+    let invoice_json = serde_json::to_value(&computed)?;
+    let subject = render_email_subject(subject_tpl, &invoice_json, &config.me, "Invoice")
         .map_err(|e| eyre::eyre!("{}", e))?;
-    let body = render_email_body(body_tpl, &computed, &client_json, &config.me)
+    let body = render_email_body(body_tpl, &invoice_json, &client_json, &config.me, "Invoice")
         .map_err(|e| eyre::eyre!("{}", e))?;
 
     let cc = client

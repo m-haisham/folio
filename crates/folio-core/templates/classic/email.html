@@ -1,0 +1,13 @@
+Dear {% if client.contact %}{{ client.contact }}{% else %}Sir or Madam{% endif %},
+
+Please find enclosed {{ document_type | lower }} {{ invoice.id }}.
+
+    Amount: {{ invoice.currency }} {{ invoice.total }}
+    {% if document_type == "Invoice" %}Due:    {{ invoice.due }}{% else %}Valid until: {{ invoice.due }}{% endif %}
+{% if invoice.notes %}
+{{ invoice.notes }}
+{% endif %}
+Yours sincerely,
+{{ me.name }}
+{% if me.company %}{{ me.company }}
+{% endif %}{{ me.email }}

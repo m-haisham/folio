@@ -10,7 +10,7 @@ use eyre::Result;
 use folio_core::{
     compute::compute_invoice,
     config::{find_root, load_config},
-    index::{check_pdf_state, compute_source_hash, BuildIndex, PdfState},
+    index::{BuildIndex, PdfState, check_pdf_state, compute_source_hash},
     pdf::html_to_pdf,
     store::{FilesystemStore, InvoiceStore},
     templates::{get_template_html, render_invoice_html},
@@ -100,6 +100,20 @@ pub async fn run(args: BuildArgs) -> Result<()> {
     let mut index = BuildIndex::load(&root)?;
 
     for id in &ids_to_build {
+        // Auto-detect document type: if no invoice file but a quote file exists, build as quote
+        if !store.invoice_path(id).exists() && store.quote_path(id).exists() {
+            crate::cmd::quote::build_quote_one(
+                &config,
+                &store,
+                &mut index,
+                id,
+                args.force,
+                args.open,
+                args.template.as_deref(),
+            )
+            .await?;
+            continue;
+        }
         build_one(&config, &store, &mut index, id, &args).await?;
     }
 

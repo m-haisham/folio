@@ -23,6 +23,34 @@ pub struct Defaults {
     pub primary_color: Option<String>,
     /// Default notes appended to every invoice when the invoice itself has no notes.
     pub notes: Option<String>,
+    /// Default ID format for quotes, e.g. "QUO-{year}-{seq:03}".
+    pub quote_id_format: Option<String>,
+    /// Number of days a quote is valid (used to compute `expires` when omitted).
+    pub expires_days: Option<u32>,
+}
+
+/// Invoice-specific defaults. These take priority over the shared `[defaults]` section.
+/// Settable under `[invoice]` in `folio.toml`.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct InvoiceDefaults {
+    /// Override `[defaults].template` for invoices only.
+    pub template: Option<String>,
+    /// Override `[defaults].id_format` for invoices only.
+    pub id_format: Option<String>,
+    /// Override `[defaults].due_days` for invoices only.
+    pub due_days: Option<u32>,
+}
+
+/// Quote-specific defaults. These take priority over the shared `[defaults]` section.
+/// Settable under `[quote]` in `folio.toml`.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct QuoteDefaults {
+    /// Override `[defaults].template` for quotes only.
+    pub template: Option<String>,
+    /// Override `[defaults].quote_id_format` for quotes only.
+    pub id_format: Option<String>,
+    /// Override `[defaults].expires_days` for quotes only.
+    pub expires_days: Option<u32>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -70,6 +98,8 @@ pub struct PathsConfig {
     pub templates: Option<String>,
     /// Directory where rendered PDFs are written. Default: `"output"`.
     pub output: Option<String>,
+    /// Directory containing `{year}/{id}.toml` quote files. Default: `"quotes"`.
+    pub quotes: Option<String>,
 }
 
 impl Default for PathsConfig {
@@ -79,6 +109,7 @@ impl Default for PathsConfig {
             invoices: None,
             templates: None,
             output: None,
+            quotes: None,
         }
     }
 }
@@ -100,6 +131,10 @@ impl PathsConfig {
     pub fn output(&self) -> &str {
         self.output.as_deref().unwrap_or("output")
     }
+    /// Return the effective `quotes` path, falling back to `"quotes"`.
+    pub fn quotes(&self) -> &str {
+        self.quotes.as_deref().unwrap_or("quotes")
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -111,6 +146,10 @@ pub struct BuildConfig {
 pub struct FolioConfig {
     pub me: MeConfig,
     pub defaults: Defaults,
+    /// Invoice-specific defaults (`[invoice]` section). Overrides shared `[defaults]`.
+    pub invoice: Option<InvoiceDefaults>,
+    /// Quote-specific defaults (`[quote]` section). Overrides shared `[defaults]`.
+    pub quote: Option<QuoteDefaults>,
     pub email: Option<EmailConfig>,
     pub build: Option<BuildConfig>,
     /// Optional directory layout overrides. Defaults to conventional names when absent.
@@ -130,6 +169,7 @@ static DEFAULT_PATHS: PathsConfig = PathsConfig {
     invoices: None,
     templates: None,
     output: None,
+    quotes: None,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -270,8 +310,90 @@ pub struct ComputedLineItem {
     pub total: Decimal,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct AcceptedInfo {
+    pub at: NaiveDate,
+    /// Invoice ID created from this quote via `folio quote accept --convert`.
+    pub invoice_id: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct DeclinedInfo {
+    pub at: NaiveDate,
+    pub reason: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Quote {
+    pub id: String,
+    pub client: String,
+    pub date: NaiveDate,
+    /// Expiry date. Computed from `expires_days` in config if omitted.
+    pub expires: Option<NaiveDate>,
+    pub currency: Option<String>,
+    pub template: Option<String>,
+    pub primary_color: Option<String>,
+    pub tax_rate: Option<Decimal>,
+    pub notes: Option<String>,
+    #[serde(rename = "items", default)]
+    pub items: Vec<LineItem>,
+    pub sent: Option<SentInfo>,
+    pub accepted: Option<AcceptedInfo>,
+    pub declined: Option<DeclinedInfo>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum QuoteStatus {
+    Draft,
+    Sent,
+    Expired,
+    Accepted,
+    Declined,
+}
+
+impl std::fmt::Display for QuoteStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Draft => write!(f, "draft"),
+            Self::Sent => write!(f, "sent"),
+            Self::Expired => write!(f, "expired"),
+            Self::Accepted => write!(f, "accepted"),
+            Self::Declined => write!(f, "declined"),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ComputedQuote {
+    pub id: String,
+    pub client: String,
+    pub date: NaiveDate,
+    pub expires: NaiveDate,
+    pub currency: String,
+    pub template: String,
+    pub primary_color: Option<String>,
+    pub tax_rate: Decimal,
+    pub notes: Option<String>,
+    pub items: Vec<ComputedLineItem>,
+    pub subtotal: Decimal,
+    pub tax_amount: Decimal,
+    pub total: Decimal,
+    pub status: QuoteStatus,
+    pub sent: Option<SentInfo>,
+    pub accepted: Option<AcceptedInfo>,
+    pub declined: Option<DeclinedInfo>,
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct InvoiceFilter {
+    pub year: Option<i32>,
+    pub client: Option<String>,
+    pub status: Option<String>,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct QuoteFilter {
     pub year: Option<i32>,
     pub client: Option<String>,
     pub status: Option<String>,

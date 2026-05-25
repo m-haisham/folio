@@ -76,6 +76,8 @@ fn mailpit_config() -> FolioConfig {
             logo: None,
         },
         defaults: Default::default(),
+        invoice: None,
+        quote: None,
         email: Some(EmailConfig {
             provider: Some("smtp".into()),
             from: Some("alice@example.com".into()),
@@ -253,6 +255,8 @@ async fn test_send_email_missing_smtp_config_returns_error() {
             logo: None,
         },
         defaults: Defaults::default(),
+        invoice: None,
+        quote: None,
         email: Some(EmailConfig {
             provider: Some("smtp".into()),
             smtp: None, // deliberately missing

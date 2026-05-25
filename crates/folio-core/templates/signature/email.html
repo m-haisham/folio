@@ -1,0 +1,11 @@
+Dear {% if client.contact %}{{ client.contact }}{% else %}there{% endif %},
+
+Attached please find {{ document_type | lower }} {{ invoice.id }} for {{ invoice.currency }} {{ invoice.total }}{% if document_type == "Invoice" %}, due {{ invoice.due }}{% else %}, valid through {{ invoice.due }}{% endif %}.
+{% if invoice.notes %}
+{{ invoice.notes }}
+
+{% endif %}With gratitude,
+
+{{ me.name }}
+{% if me.company %}{{ me.company }}
+{% endif %}{{ me.email }}

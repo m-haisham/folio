@@ -2,7 +2,9 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <title>Invoice {{ invoice.id }}</title>
+        <title>
+            {{ document_type | default(value="Invoice") }} {{ invoice.id }}
+        </title>
         <script src="https://cdn.tailwindcss.com"></script>
         <style>
             @page {
@@ -171,7 +173,7 @@
                             margin-bottom: 8px;
                         "
                     >
-                        Invoice
+                        {{ document_type | default(value="Invoice") }}
                     </div>
                     <div
                         class="serif"
@@ -218,7 +220,7 @@
                                     letter-spacing: 0.1em;
                                     color: #7aaa90;
                                 "
-                                >Due</span
+                                >{{ due_label | default(value="Due") }}</span
                             >
                             &nbsp;<span style="color: #fcfaf8; font-weight: 500"
                                 >{{ invoice.due }}</span

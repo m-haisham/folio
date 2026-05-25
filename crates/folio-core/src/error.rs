@@ -8,6 +8,9 @@ pub enum FolioError {
     #[error("invoice {id:?} not found")]
     InvoiceNotFound { id: String },
 
+    #[error("quote {id:?} not found")]
+    QuoteNotFound { id: String },
+
     #[error("invoice {id:?} is already marked as sent — use --force to overwrite")]
     AlreadySent { id: String },
 

@@ -1,6 +1,6 @@
 use crate::{
     error::{FolioError, Result},
-    types::{Client, Invoice, InvoiceFilter, PathsConfig},
+    types::{Client, Invoice, InvoiceFilter, PathsConfig, Quote, QuoteFilter},
 };
 use async_trait::async_trait;
 use std::{fs, path::PathBuf};
@@ -15,6 +15,14 @@ pub trait InvoiceStore: Send + Sync {
     async fn list_clients(&self) -> Result<Vec<Client>>;
     async fn get_client(&self, slug: &str) -> Result<Client>;
     async fn save_client(&self, client: &Client) -> Result<()>;
+}
+
+#[async_trait]
+pub trait QuoteStore: Send + Sync {
+    async fn list_quotes(&self, filter: &QuoteFilter) -> Result<Vec<Quote>>;
+    async fn get_quote(&self, id: &str) -> Result<Quote>;
+    async fn save_quote(&self, quote: &Quote) -> Result<()>;
+    async fn delete_quote(&self, id: &str) -> Result<()>;
 }
 
 /// Filesystem-backed store that reads and writes TOML files under `root`.
@@ -78,6 +86,25 @@ impl FilesystemStore {
     /// Absolute path to the custom templates directory.
     pub fn templates_dir(&self) -> PathBuf {
         self.root.join(self.paths.templates())
+    }
+
+    /// Absolute path to a quote TOML, e.g. `{quotes}/{year}/{id}.toml`.
+    pub fn quote_path(&self, id: &str) -> PathBuf {
+        let parts: Vec<&str> = id.split('-').collect();
+        let year = if parts.len() >= 2 {
+            parts[1]
+        } else {
+            "unknown"
+        };
+        self.root
+            .join(self.paths.quotes())
+            .join(year)
+            .join(format!("{}.toml", id))
+    }
+
+    /// Absolute path to the quotes directory.
+    pub fn quotes_dir(&self) -> PathBuf {
+        self.root.join(self.paths.quotes())
     }
 }
 
@@ -215,6 +242,89 @@ impl InvoiceStore for FilesystemStore {
         let path = clients_dir.join(format!("{}.toml", client.slug));
         let contents = toml::to_string_pretty(client)?;
         fs::write(path, contents)?;
+        Ok(())
+    }
+}
+
+#[async_trait]
+impl QuoteStore for FilesystemStore {
+    async fn list_quotes(&self, filter: &QuoteFilter) -> Result<Vec<Quote>> {
+        let quotes_dir = self.quotes_dir();
+        let mut quotes = Vec::new();
+
+        if !quotes_dir.exists() {
+            return Ok(quotes);
+        }
+
+        let mut year_entries: Vec<_> = fs::read_dir(&quotes_dir)?.filter_map(|e| e.ok()).collect();
+        year_entries.sort_by_key(|e| e.file_name());
+
+        for year_entry in year_entries {
+            if !year_entry.file_type()?.is_dir() {
+                continue;
+            }
+
+            if let Some(year_str) = year_entry.file_name().to_str().map(|s| s.to_string()) {
+                if let Ok(year) = year_str.parse::<i32>() {
+                    if let Some(filter_year) = filter.year {
+                        if year != filter_year {
+                            continue;
+                        }
+                    }
+                }
+            }
+
+            let mut q_entries: Vec<_> = fs::read_dir(year_entry.path())?
+                .filter_map(|e| e.ok())
+                .collect();
+            q_entries.sort_by_key(|e| e.file_name());
+
+            for q_entry in q_entries {
+                let path = q_entry.path();
+                if path.extension().and_then(|e| e.to_str()) != Some("toml") {
+                    continue;
+                }
+                let contents = fs::read_to_string(&path)?;
+                let quote: Quote = toml::from_str(&contents)?;
+
+                if let Some(ref client_filter) = filter.client {
+                    if &quote.client != client_filter {
+                        continue;
+                    }
+                }
+
+                quotes.push(quote);
+            }
+        }
+
+        Ok(quotes)
+    }
+
+    async fn get_quote(&self, id: &str) -> Result<Quote> {
+        let path = self.quote_path(id);
+        if !path.exists() {
+            return Err(FolioError::QuoteNotFound { id: id.to_string() });
+        }
+        let contents = fs::read_to_string(&path)?;
+        let quote: Quote = toml::from_str(&contents)?;
+        Ok(quote)
+    }
+
+    async fn save_quote(&self, quote: &Quote) -> Result<()> {
+        let path = self.quote_path(&quote.id);
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent)?;
+        }
+        let contents = toml::to_string_pretty(quote)?;
+        fs::write(&path, contents)?;
+        Ok(())
+    }
+
+    async fn delete_quote(&self, id: &str) -> Result<()> {
+        let path = self.quote_path(id);
+        if path.exists() {
+            fs::remove_file(path)?;
+        }
         Ok(())
     }
 }

@@ -1,9 +1,12 @@
 pub mod build;
+pub mod client;
 pub mod init;
+pub mod invoice;
 pub mod list;
 pub mod new;
 pub mod paid;
 pub mod preview;
+pub mod quote;
 pub mod send;
 pub mod summary;
 pub mod templates;

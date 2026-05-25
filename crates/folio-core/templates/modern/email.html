@@ -1,0 +1,9 @@
+Hey {% if client.contact %}{{ client.contact }}{% else %}there{% endif %},
+
+{{ document_type }} {{ invoice.id }} is ready — {{ invoice.currency }} {{ invoice.total }}{% if document_type == "Invoice" %}, due {{ invoice.due }}{% else %}, valid until {{ invoice.due }}{% endif %}.
+{% if invoice.notes %}
+{{ invoice.notes }}
+{% endif %}
+Thanks,
+{{ me.name }}{% if me.company %} @ {{ me.company }}{% endif %}
+{{ me.email }}

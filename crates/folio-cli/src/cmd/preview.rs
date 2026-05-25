@@ -42,6 +42,19 @@ pub async fn run(args: PreviewArgs) -> Result<()> {
     let config = load_config(&root)?;
     let store = FilesystemStore::with_paths(&root, config.paths().clone());
 
+    // Auto-detect: if this ID belongs to a quote, dispatch to quote preview
+    if !store.invoice_path(&args.id).exists() && store.quote_path(&args.id).exists() {
+        return crate::cmd::quote::run(crate::cmd::quote::QuoteArgs {
+            command: crate::cmd::quote::QuoteCommand::Preview(
+                crate::cmd::quote::QuotePreviewArgs {
+                    id: args.id,
+                    template: args.template,
+                },
+            ),
+        })
+        .await;
+    }
+
     let invoice = store.get(&args.id).await?;
     let client = store.get_client(&invoice.client).await?;
     let computed = compute_invoice(&invoice, &client, &config);

@@ -9,7 +9,7 @@ use eyre::Result;
 use folio_core::{
     compute::compute_invoice,
     config::{find_root, load_config},
-    store::{FilesystemStore, InvoiceStore},
+    store::{FilesystemStore, InvoiceStore, QuoteStore},
     types::{InvoiceFilter, InvoiceStatus},
 };
 use rust_decimal::Decimal;
@@ -120,6 +120,46 @@ pub async fn run(args: SummaryArgs) -> Result<()> {
     statuses.sort_by_key(|(k, _)| k.as_str());
     for (status, count) in &statuses {
         println!("  {:<15} {}", status, count);
+    }
+
+    // ── Quote pipeline ────────────────────────────────────────────────────────
+    let quote_filter = folio_core::types::QuoteFilter {
+        year: args.year,
+        client: args.client.clone(),
+        ..Default::default()
+    };
+    let quotes = store.list_quotes(&quote_filter).await?;
+
+    if !quotes.is_empty() {
+        let mut quoted_total = Decimal::ZERO;
+        let mut accepted_total = Decimal::ZERO;
+        let mut quote_status_counts: std::collections::HashMap<String, usize> =
+            std::collections::HashMap::new();
+
+        for quote in &quotes {
+            let client = store.get_client(&quote.client).await?;
+            let computed = folio_core::quote_compute::compute_quote(quote, &client, &config);
+            quoted_total += computed.total;
+            if matches!(computed.status, folio_core::types::QuoteStatus::Accepted) {
+                accepted_total += computed.total;
+            }
+            *quote_status_counts
+                .entry(computed.status.to_string())
+                .or_insert(0) += 1;
+        }
+
+        let pending_total = quoted_total - accepted_total;
+
+        println!("\n=== Quote Pipeline ===\n");
+        println!("Total quoted:       {:>12.2}", quoted_total);
+        println!("Accepted:           {:>12.2}", accepted_total);
+        println!("Pending:            {:>12.2}", pending_total);
+        println!("\n--- By Status ---");
+        let mut q_statuses: Vec<_> = quote_status_counts.iter().collect();
+        q_statuses.sort_by_key(|(k, _)| k.as_str());
+        for (status, count) in &q_statuses {
+            println!("  {:<15} {}", status, count);
+        }
     }
 
     Ok(())

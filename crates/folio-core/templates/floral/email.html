@@ -1,0 +1,16 @@
+Hi {% if client.contact %}{{ client.contact }}{% else %}there{% endif %},
+
+I hope this message finds you well. Please find attached {{ document_type | lower }} {{ invoice.id }}.
+{% if document_type == "Invoice" %}
+A payment of {{ invoice.currency }} {{ invoice.total }} is due by {{ invoice.due }}.
+{% else %}
+This quote for {{ invoice.currency }} {{ invoice.total }} is valid until {{ invoice.due }}.
+{% endif %}
+{% if invoice.notes %}{{ invoice.notes }}
+
+{% endif %}Thank you for your business.
+
+Warm regards,
+{{ me.name }}
+{% if me.company %}{{ me.company }}
+{% endif %}{{ me.email }}

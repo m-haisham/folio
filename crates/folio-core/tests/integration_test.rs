@@ -31,7 +31,11 @@ fn make_config() -> FolioConfig {
             id_format: None,
             primary_color: None,
             notes: None,
+            quote_id_format: None,
+            expires_days: None,
         },
+        invoice: None,
+        quote: None,
         email: None,
         build: None,
         paths: None,
@@ -379,6 +383,7 @@ fn test_paths_config_overrides() {
         invoices: Some("billing/invoices".into()),
         templates: Some("billing/templates".into()),
         output: Some("billing/output".into()),
+        quotes: None,
     };
     assert_eq!(p.clients(), "billing/clients");
     assert_eq!(p.invoices(), "billing/invoices");
@@ -394,6 +399,7 @@ fn test_paths_config_partial_override() {
         invoices: None,
         templates: None,
         output: Some("dist".into()),
+        quotes: None,
     };
     assert_eq!(p.clients(), "billing/clients");
     assert_eq!(p.invoices(), "invoices"); // default
@@ -411,6 +417,7 @@ async fn test_store_with_custom_paths() {
         invoices: Some("billing/invoices".into()),
         templates: None,
         output: Some("billing/output".into()),
+        quotes: None,
     };
     let store = FilesystemStore::with_paths(dir.path(), paths);
 
@@ -460,6 +467,7 @@ fn test_store_path_helpers() {
         invoices: None,
         templates: Some("my/templates".into()),
         output: Some("dist".into()),
+        quotes: None,
     };
     let store = FilesystemStore::with_paths("/repo", paths);
     assert_eq!(store.output_dir(), std::path::Path::new("/repo/dist"));
@@ -475,4 +483,169 @@ fn test_folio_config_paths_absent() {
     let config = make_config(); // paths: None
     assert_eq!(config.paths().clients(), "clients");
     assert_eq!(config.paths().output(), "output");
+}
+
+// ─── quote_compute ───────────────────────────────────────────────────────────────────────
+
+#[cfg(test)]
+mod quote_tests {
+    use super::*;
+    use folio_core::{
+        quote_compute::{compute_quote, derive_quote_status},
+        store::QuoteStore,
+        types::{AcceptedInfo, DeclinedInfo, Quote, QuoteStatus, SentInfo},
+    };
+
+    fn make_quote(id: &str, date: NaiveDate) -> Quote {
+        Quote {
+            id: id.into(),
+            client: "bob-corp".into(),
+            date,
+            expires: None,
+            currency: None,
+            template: None,
+            primary_color: None,
+            tax_rate: None,
+            notes: None,
+            items: vec![LineItem {
+                description: "Proposal".into(),
+                quantity: Decimal::from(5),
+                unit: Some("hours".into()),
+                rate: Decimal::from(100),
+            }],
+            sent: None,
+            accepted: None,
+            declined: None,
+        }
+    }
+
+    #[test]
+    fn test_compute_quote_totals() {
+        let config = make_config();
+        let client = make_client();
+        let date = NaiveDate::from_ymd_opt(2026, 1, 15).unwrap();
+        let quote = make_quote("QUO-2026-001", date);
+        let computed = compute_quote(&quote, &client, &config);
+        // 5 * 100 = 500, 10% tax = 50, total = 550
+        assert_eq!(computed.subtotal, Decimal::from(500));
+        assert_eq!(computed.tax_amount, Decimal::from(50));
+        assert_eq!(computed.total, Decimal::from(550));
+        // expires = date + 30 days (config.defaults has no expires_days so default 30)
+        assert_eq!(
+            computed.expires,
+            NaiveDate::from_ymd_opt(2026, 2, 14).unwrap()
+        );
+    }
+
+    #[test]
+    fn test_quote_status_draft() {
+        let date = NaiveDate::from_ymd_opt(2026, 6, 1).unwrap();
+        let expires = NaiveDate::from_ymd_opt(2026, 7, 1).unwrap();
+        let today = NaiveDate::from_ymd_opt(2026, 6, 15).unwrap();
+        let quote = make_quote("QUO-2026-001", date);
+        assert_eq!(
+            derive_quote_status(&quote, &expires, &today),
+            QuoteStatus::Draft
+        );
+    }
+
+    #[test]
+    fn test_quote_status_sent() {
+        let date = NaiveDate::from_ymd_opt(2026, 6, 1).unwrap();
+        let expires = NaiveDate::from_ymd_opt(2026, 7, 1).unwrap();
+        let today = NaiveDate::from_ymd_opt(2026, 6, 15).unwrap();
+        let mut quote = make_quote("QUO-2026-001", date);
+        quote.sent = Some(SentInfo {
+            at: chrono::DateTime::parse_from_rfc3339("2026-06-01T10:00:00Z")
+                .unwrap()
+                .with_timezone(&chrono::Utc),
+            method: "email".into(),
+            to: "bob@example.com".into(),
+            cc: None,
+        });
+        assert_eq!(
+            derive_quote_status(&quote, &expires, &today),
+            QuoteStatus::Sent
+        );
+    }
+
+    #[test]
+    fn test_quote_status_expired() {
+        let date = NaiveDate::from_ymd_opt(2026, 5, 1).unwrap();
+        let expires = NaiveDate::from_ymd_opt(2026, 5, 31).unwrap();
+        let today = NaiveDate::from_ymd_opt(2026, 6, 15).unwrap();
+        let mut quote = make_quote("QUO-2026-001", date);
+        quote.sent = Some(SentInfo {
+            at: chrono::DateTime::parse_from_rfc3339("2026-05-01T10:00:00Z")
+                .unwrap()
+                .with_timezone(&chrono::Utc),
+            method: "email".into(),
+            to: "bob@example.com".into(),
+            cc: None,
+        });
+        assert_eq!(
+            derive_quote_status(&quote, &expires, &today),
+            QuoteStatus::Expired
+        );
+    }
+
+    #[test]
+    fn test_quote_status_accepted() {
+        let date = NaiveDate::from_ymd_opt(2026, 6, 1).unwrap();
+        let expires = NaiveDate::from_ymd_opt(2026, 7, 1).unwrap();
+        let today = NaiveDate::from_ymd_opt(2026, 6, 15).unwrap();
+        let mut quote = make_quote("QUO-2026-001", date);
+        quote.accepted = Some(AcceptedInfo {
+            at: today,
+            invoice_id: None,
+        });
+        assert_eq!(
+            derive_quote_status(&quote, &expires, &today),
+            QuoteStatus::Accepted
+        );
+    }
+
+    #[test]
+    fn test_quote_status_declined() {
+        let date = NaiveDate::from_ymd_opt(2026, 6, 1).unwrap();
+        let expires = NaiveDate::from_ymd_opt(2026, 7, 1).unwrap();
+        let today = NaiveDate::from_ymd_opt(2026, 6, 15).unwrap();
+        let mut quote = make_quote("QUO-2026-001", date);
+        quote.declined = Some(DeclinedInfo {
+            at: today,
+            reason: Some("Over budget".into()),
+        });
+        assert_eq!(
+            derive_quote_status(&quote, &expires, &today),
+            QuoteStatus::Declined
+        );
+    }
+
+    #[tokio::test]
+    async fn test_store_quote_crud() {
+        let dir = TempDir::new().unwrap();
+        let store = FilesystemStore::new(dir.path());
+
+        let date = NaiveDate::from_ymd_opt(2026, 3, 1).unwrap();
+        let quote = make_quote("QUO-2026-001", date);
+
+        // Save
+        store.save_quote(&quote).await.unwrap();
+        assert!(dir.path().join("quotes/2026/QUO-2026-001.toml").exists());
+
+        // Get
+        let loaded = store.get_quote("QUO-2026-001").await.unwrap();
+        assert_eq!(loaded.id, "QUO-2026-001");
+        assert_eq!(loaded.client, "bob-corp");
+
+        // List
+        let filter = folio_core::types::QuoteFilter::default();
+        let all = store.list_quotes(&filter).await.unwrap();
+        assert_eq!(all.len(), 1);
+
+        // Delete
+        store.delete_quote("QUO-2026-001").await.unwrap();
+        let result = store.get_quote("QUO-2026-001").await;
+        assert!(result.is_err());
+    }
 }

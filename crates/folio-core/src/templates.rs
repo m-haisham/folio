@@ -1,6 +1,6 @@
 use crate::{
     error::{FolioError, Result},
-    types::{ComputedInvoice, FolioConfig, MeConfig},
+    types::{ComputedInvoice, ComputedQuote, FolioConfig, MeConfig},
 };
 use rust_embed::RustEmbed;
 use std::{fs, path::Path};
@@ -140,7 +140,13 @@ pub fn list_custom(templates_dir: &Path) -> Vec<TemplateInfo> {
                 continue;
             }
             let name = entry.file_name().to_string_lossy().to_string();
-            let html_path = entry.path().join("invoice.html");
+            let doc_path = entry.path().join("document.html");
+            let inv_path = entry.path().join("invoice.html");
+            let html_path = if doc_path.exists() {
+                doc_path
+            } else {
+                inv_path.clone()
+            };
             if html_path.exists() {
                 result.push(TemplateInfo {
                     name: name.clone(),
@@ -159,15 +165,23 @@ pub fn list_custom(templates_dir: &Path) -> Vec<TemplateInfo> {
 /// Custom templates (from `templates_dir`) take priority over bundled ones.
 /// `templates_dir` should be the resolved path (i.e. `root.join(paths.templates())`).
 pub fn get_template_html(name: &str, templates_dir: &Path) -> Result<String> {
-    // Custom templates take priority over bundled
-    let custom_path = templates_dir.join(name).join("invoice.html");
-    if custom_path.exists() {
-        return Ok(fs::read_to_string(&custom_path)?);
+    // Custom templates: document.html takes priority, invoice.html for legacy compat
+    let custom_doc = templates_dir.join(name).join("document.html");
+    if custom_doc.exists() {
+        return Ok(fs::read_to_string(&custom_doc)?);
+    }
+    let custom_inv = templates_dir.join(name).join("invoice.html");
+    if custom_inv.exists() {
+        return Ok(fs::read_to_string(&custom_inv)?);
     }
 
-    // Try bundled
-    let key = format!("{}/invoice.html", name);
+    // Bundled: document.html, then invoice.html for legacy
+    let key = format!("{}/document.html", name);
     if let Some(file) = BundledTemplates::get(&key) {
+        return Ok(String::from_utf8_lossy(file.data.as_ref()).to_string());
+    }
+    let key_legacy = format!("{}/invoice.html", name);
+    if let Some(file) = BundledTemplates::get(&key_legacy) {
         return Ok(String::from_utf8_lossy(file.data.as_ref()).to_string());
     }
 
@@ -176,20 +190,43 @@ pub fn get_template_html(name: &str, templates_dir: &Path) -> Result<String> {
     })
 }
 
-pub fn export_template(name: &str, output: &Path) -> Result<()> {
-    let key_html = format!("{}/invoice.html", name);
-    let key_toml = format!("{}/template.toml", name);
+/// Return the email body template for a named template, or `None` if not found.
+///
+/// Checks custom templates first, then bundled ones. Returns `None` when absent
+/// so callers can fall back to `[email.templates].body` from config.
+pub fn get_email_template(name: &str, templates_dir: &Path) -> Option<String> {
+    // Custom template takes priority
+    let custom_path = templates_dir.join(name).join("email.html");
+    if custom_path.exists() {
+        return fs::read_to_string(&custom_path).ok();
+    }
 
+    // Try bundled
+    let key = format!("{}/email.html", name);
+    BundledTemplates::get(&key).map(|f| String::from_utf8_lossy(f.data.as_ref()).to_string())
+}
+
+pub fn export_template(name: &str, output: &Path) -> Result<()> {
     fs::create_dir_all(output)?;
 
+    // Export document.html
+    let key_html = format!("{}/document.html", name);
     if let Some(file) = BundledTemplates::get(&key_html) {
-        fs::write(output.join("invoice.html"), file.data.as_ref())?;
+        fs::write(output.join("document.html"), file.data.as_ref())?;
     } else {
         return Err(FolioError::TemplateNotFound {
             name: name.to_string(),
         });
     }
 
+    // Export email.html if present
+    let key_email = format!("{}/email.html", name);
+    if let Some(file) = BundledTemplates::get(&key_email) {
+        fs::write(output.join("email.html"), file.data.as_ref())?;
+    }
+
+    // Export template.toml if present
+    let key_toml = format!("{}/template.toml", name);
     if let Some(file) = BundledTemplates::get(&key_toml) {
         fs::write(output.join("template.toml"), file.data.as_ref())?;
     }
@@ -211,6 +248,8 @@ pub fn render_invoice_html(
     ctx.insert("invoice", invoice);
     ctx.insert("client", client);
     ctx.insert("me", me);
+    ctx.insert("document_type", "Invoice");
+    ctx.insert("due_label", "Due");
 
     if let Some(ref color) = invoice.primary_color {
         if let Some(theme) = build_theme(color) {
@@ -221,24 +260,70 @@ pub fn render_invoice_html(
     Ok(tera.render("invoice.html", &ctx)?)
 }
 
+pub fn render_quote_html(
+    template_html: &str,
+    quote: &ComputedQuote,
+    client: &serde_json::Value,
+    me: &MeConfig,
+    _config: &FolioConfig,
+) -> Result<String> {
+    let mut tera = Tera::default();
+    tera.add_raw_template("invoice.html", template_html)?;
+
+    // Build an invoice-compatible JSON value from the quote so existing
+    // templates work unchanged (they use {{ invoice.* }} everywhere).
+    let mut inv_ctx = serde_json::to_value(quote).map_err(|e| FolioError::Other(e.to_string()))?;
+
+    if let Some(obj) = inv_ctx.as_object_mut() {
+        // expires → due (templates use invoice.due)
+        if let Some(expires) = obj.remove("expires") {
+            obj.insert("due".to_string(), expires);
+        }
+        // Null out invoice-only fields that quotes don't have
+        obj.insert("paid".to_string(), serde_json::Value::Null);
+        obj.insert("voided".to_string(), serde_json::Value::Null);
+        // outstanding = total (no partial payments on quotes)
+        let total = obj.get("total").cloned().unwrap_or(serde_json::Value::Null);
+        obj.insert("outstanding".to_string(), total);
+    }
+
+    let mut ctx = Context::new();
+    ctx.insert("invoice", &inv_ctx);
+    ctx.insert("client", client);
+    ctx.insert("me", me);
+    ctx.insert("document_type", "Quote");
+    ctx.insert("due_label", "Expires");
+
+    if let Some(ref color) = quote.primary_color {
+        if let Some(theme) = build_theme(color) {
+            ctx.insert("theme", &theme);
+        }
+    }
+
+    Ok(tera.render("invoice.html", &ctx)?)
+}
+
 pub fn render_email_subject(
     template: &str,
-    invoice: &ComputedInvoice,
+    invoice: &serde_json::Value,
     me: &MeConfig,
+    document_type: &str,
 ) -> Result<String> {
     let mut tera = Tera::default();
     tera.add_raw_template("subject", template)?;
     let mut ctx = Context::new();
     ctx.insert("invoice", invoice);
     ctx.insert("me", me);
+    ctx.insert("document_type", document_type);
     Ok(tera.render("subject", &ctx)?)
 }
 
 pub fn render_email_body(
     template: &str,
-    invoice: &ComputedInvoice,
+    invoice: &serde_json::Value,
     client: &serde_json::Value,
     me: &MeConfig,
+    document_type: &str,
 ) -> Result<String> {
     let mut tera = Tera::default();
     tera.add_raw_template("body", template)?;
@@ -246,5 +331,6 @@ pub fn render_email_body(
     ctx.insert("invoice", invoice);
     ctx.insert("client", client);
     ctx.insert("me", me);
+    ctx.insert("document_type", document_type);
     Ok(tera.render("body", &ctx)?)
 }

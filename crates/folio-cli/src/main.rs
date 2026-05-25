@@ -41,6 +41,10 @@ struct Cli {
 enum Commands {
     /// Initialise a new folio repository in the current directory.
     Init(cmd::init::InitArgs),
+    /// Manage invoices (new, list, build, send, paid, void, preview, summary).
+    Invoice(cmd::invoice::InvoiceArgs),
+    /// Manage clients.
+    Client(cmd::client::ClientArgs),
     /// Create a new invoice interactively.
     New(cmd::new::NewArgs),
     /// Render one or more invoices to PDF.
@@ -61,6 +65,8 @@ enum Commands {
     Templates(cmd::templates::TemplatesArgs),
     /// Update folio to the latest release.
     Update(cmd::update::UpdateArgs),
+    /// Manage quotations.
+    Quote(cmd::quote::QuoteArgs),
 }
 
 #[tokio::main]
@@ -71,6 +77,8 @@ async fn main() {
 
     let result = match cli.command {
         Commands::Init(args) => cmd::init::run(args).await,
+        Commands::Invoice(args) => cmd::invoice::run(args).await,
+        Commands::Client(args) => cmd::client::run(args).await,
         Commands::New(args) => cmd::new::run(args).await,
         Commands::Build(args) => cmd::build::run(args).await,
         Commands::Send(args) => cmd::send::run(args).await,
@@ -81,6 +89,7 @@ async fn main() {
         Commands::Preview(args) => cmd::preview::run(args).await,
         Commands::Templates(args) => cmd::templates::run(args).await,
         Commands::Update(args) => cmd::update::run(args).await,
+        Commands::Quote(args) => cmd::quote::run(args).await,
     };
 
     if let Err(err) = result {

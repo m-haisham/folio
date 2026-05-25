@@ -1,8 +1,9 @@
-//! `folio new` — interactive wizard for creating a new invoice.
+//! `folio new` — interactive wizard for creating a new invoice or quote.
 //!
-//! Prompts for the client (with autocomplete from `clients/`), invoice date,
-//! and line items. Auto-generates the next sequential ID based on `id_format`
-//! in `folio.toml`. Writes the invoice TOML to `invoices/{year}/{id}.toml`.
+//! Prompts for the document type (invoice or quote), client (with autocomplete
+//! from `clients/`), date, and line items. Auto-generates the next sequential
+//! ID based on `id_format` in `folio.toml`. Writes the TOML to
+//! `invoices/{year}/{id}.toml` or `quotes/{year}/{id}.toml`.
 //! Does **not** build or send — those are separate steps.
 //!
 //! If no clients exist yet, the wizard offers to create one inline so the user
@@ -14,17 +15,17 @@ use dialoguer::{Confirm, Input, Select};
 use eyre::Result;
 use folio_core::{
     config::{find_root, load_config},
-    store::{FilesystemStore, InvoiceStore},
-    types::{Client, Invoice, InvoiceFilter, LineItem},
+    store::{FilesystemStore, InvoiceStore, QuoteStore},
+    types::{Invoice, InvoiceFilter, LineItem, Quote, QuoteFilter},
 };
 use rust_decimal::Decimal;
 use std::str::FromStr;
 
-/// Create a new invoice interactively.
+/// Create a new invoice or quote interactively.
 ///
-/// Prompts for client, date, and line items, then writes the invoice TOML to
-/// `invoices/{year}/{id}.toml`. The next sequential ID is auto-generated from
-/// the `id_format` in `folio.toml`.
+/// Prompts for document type (unless `--type` is given), client, date, and
+/// line items, then writes the TOML to the appropriate directory. The next
+/// sequential ID is auto-generated from `id_format` in `folio.toml`.
 ///
 /// If no clients exist yet you will be offered the option to create one now.
 ///
@@ -32,6 +33,8 @@ use std::str::FromStr;
 ///
 /// ```sh
 /// folio new
+/// folio new --type invoice
+/// folio new --type quote
 /// folio new --client acme
 /// folio new --client acme --date 2026-05-01
 /// ```
@@ -44,6 +47,10 @@ pub struct NewArgs {
     /// Invoice date in `YYYY-MM-DD` format (defaults to today).
     #[arg(long)]
     pub date: Option<String>,
+
+    /// Document type to create: `invoice` or `quote`.
+    #[arg(long = "type")]
+    pub doc_type: Option<String>,
 }
 
 pub async fn run(args: NewArgs) -> Result<()> {
@@ -51,6 +58,18 @@ pub async fn run(args: NewArgs) -> Result<()> {
     let root = find_root(&cwd).ok_or_else(|| eyre::eyre!("No folio.toml found"))?;
     let config = load_config(&root)?;
     let store = FilesystemStore::with_paths(&root, config.paths().clone());
+
+    // ── Document type ─────────────────────────────────────────────────────
+    let doc_type = if let Some(ref t) = args.doc_type {
+        t.clone()
+    } else {
+        let choices = &["invoice", "quote"];
+        let idx = Select::new()
+            .with_prompt("Document type")
+            .items(choices)
+            .interact()?;
+        choices[idx].to_string()
+    };
 
     // ── Client selection ──────────────────────────────────────────────────
     let client_slug = if let Some(c) = args.client {
@@ -78,7 +97,7 @@ pub async fn run(args: NewArgs) -> Result<()> {
                     store.clients_dir().display()
                 );
             }
-            create_client_interactive(&store).await?
+            crate::cmd::client::create_client_interactive(&store).await?
         } else {
             let names: Vec<&str> = clients.iter().map(|c| c.slug.as_str()).collect();
             let idx = Select::new()
@@ -94,8 +113,13 @@ pub async fn run(args: NewArgs) -> Result<()> {
         d
     } else {
         let today = Local::now().format("%Y-%m-%d").to_string();
+        let prompt = if doc_type == "quote" {
+            "Quote date"
+        } else {
+            "Invoice date"
+        };
         Input::new()
-            .with_prompt("Invoice date")
+            .with_prompt(prompt)
             .default(today)
             .interact_text()?
     };
@@ -106,16 +130,31 @@ pub async fn run(args: NewArgs) -> Result<()> {
     let year = date.format("%Y").to_string();
 
     // ── ID generation ─────────────────────────────────────────────────────
-    let id_format = config
-        .defaults
-        .id_format
-        .as_deref()
-        .unwrap_or("INV-{year}-{seq:03}");
+    let (id, is_quote) = if doc_type == "quote" {
+        let id_format = config
+            .quote
+            .as_ref()
+            .and_then(|q| q.id_format.as_deref())
+            .or(config.defaults.quote_id_format.as_deref())
+            .unwrap_or("QUO-{year}-{seq:03}");
+        let next_seq = next_quote_seq(&store, date.year()).await?;
+        (format_id(id_format, date.year(), next_seq), true)
+    } else {
+        let id_format = config
+            .invoice
+            .as_ref()
+            .and_then(|i| i.id_format.as_deref())
+            .or(config.defaults.id_format.as_deref())
+            .unwrap_or("INV-{year}-{seq:03}");
+        let next_seq = next_invoice_seq(&store, date.year()).await?;
+        (format_id(id_format, date.year(), next_seq), false)
+    };
 
-    let next_seq = next_invoice_seq(&store, date.year()).await?;
-    let id = format_id(id_format, date.year(), next_seq);
-
-    println!("Creating invoice {}", id);
+    if is_quote {
+        println!("Creating quote {}", id);
+    } else {
+        println!("Creating invoice {}", id);
+    }
 
     // ── Line items — loop until the user submits an empty description ─────
     let mut items = Vec::new();
@@ -156,97 +195,46 @@ pub async fn run(args: NewArgs) -> Result<()> {
         eyre::bail!("no items added — at least one line item is required");
     }
 
-    let invoice = Invoice {
-        id: id.clone(),
-        client: client_slug,
-        date,
-        due: None,
-        currency: None,
-        template: None,
-        primary_color: None,
-        tax_rate: None,
-        notes: None,
-        items,
-        sent: None,
-        paid: None,
-        voided: None,
-    };
-
-    store.save(&invoice).await?;
-    println!("✓ Created invoices/{}/{}.toml", year, id);
+    // ── Save ──────────────────────────────────────────────────────────────
+    if is_quote {
+        let quote = Quote {
+            id: id.clone(),
+            client: client_slug,
+            date,
+            expires: None,
+            currency: None,
+            template: None,
+            primary_color: None,
+            tax_rate: None,
+            notes: None,
+            items,
+            sent: None,
+            accepted: None,
+            declined: None,
+        };
+        store.save_quote(&quote).await?;
+        println!("✓ Created quotes/{}/{}.toml", year, id);
+    } else {
+        let invoice = Invoice {
+            id: id.clone(),
+            client: client_slug,
+            date,
+            due: None,
+            currency: None,
+            template: None,
+            primary_color: None,
+            tax_rate: None,
+            notes: None,
+            items,
+            sent: None,
+            paid: None,
+            voided: None,
+        };
+        store.save(&invoice).await?;
+        println!("✓ Created invoices/{}/{}.toml", year, id);
+    }
 
     Ok(())
-}
-
-/// Interactively prompt for client details and write `clients/{slug}.toml`.
-///
-/// Returns the slug of the newly created client.
-async fn create_client_interactive(store: &FilesystemStore) -> Result<String> {
-    println!();
-    let name: String = Input::new().with_prompt("Client name").interact_text()?;
-
-    // Derive a default slug from the name (lowercase, spaces → hyphens)
-    let default_slug = name
-        .to_lowercase()
-        .split_whitespace()
-        .collect::<Vec<_>>()
-        .join("-");
-
-    let slug: String = Input::new()
-        .with_prompt("Client slug (used as filename)")
-        .default(default_slug)
-        .interact_text()?;
-
-    let contact: String = Input::new()
-        .with_prompt("Contact name")
-        .allow_empty(true)
-        .interact_text()?;
-
-    let email: String = Input::new().with_prompt("Billing email").interact_text()?;
-
-    let addr1: String = Input::new()
-        .with_prompt("Address line 1")
-        .allow_empty(true)
-        .interact_text()?;
-    let addr2: String = Input::new()
-        .with_prompt("Address line 2")
-        .allow_empty(true)
-        .interact_text()?;
-
-    let mut address = Vec::new();
-    if !addr1.is_empty() {
-        address.push(addr1);
-    }
-    if !addr2.is_empty() {
-        address.push(addr2);
-    }
-
-    let client = Client {
-        name,
-        contact: if contact.is_empty() {
-            None
-        } else {
-            Some(contact)
-        },
-        email,
-        address,
-        currency: None,
-        due_days: None,
-        template: None,
-        email_opts: None,
-        notes: None,
-        defaults: None,
-        slug: slug.clone(),
-    };
-
-    store.save_client(&client).await?;
-    println!(
-        "✓ Created {}/{}.toml\n",
-        store.clients_dir().display(),
-        slug
-    );
-
-    Ok(slug)
 }
 
 /// Find the next sequential invoice number for the given year.
@@ -263,6 +251,26 @@ pub async fn next_invoice_seq(store: &FilesystemStore, year: i32) -> Result<u32>
     let max_seq = invoices
         .iter()
         .filter_map(|inv| inv.id.split('-').last()?.parse::<u32>().ok())
+        .max()
+        .unwrap_or(0);
+
+    Ok(max_seq + 1)
+}
+
+/// Find the next sequential quote number for the given year.
+///
+/// Scans existing quotes for the year, extracts the trailing numeric segment
+/// from each ID, and returns `max + 1`.
+async fn next_quote_seq(store: &FilesystemStore, year: i32) -> Result<u32> {
+    let filter = QuoteFilter {
+        year: Some(year),
+        ..Default::default()
+    };
+    let quotes = store.list_quotes(&filter).await?;
+
+    let max_seq = quotes
+        .iter()
+        .filter_map(|q| q.id.split('-').last()?.parse::<u32>().ok())
         .max()
         .unwrap_or(0);
 

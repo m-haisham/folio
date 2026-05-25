@@ -2,7 +2,9 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <title>Invoice {{ invoice.id }}</title>
+        <title>
+            {{ document_type | default(value="Invoice") }} {{ invoice.id }}
+        </title>
         <script src="https://cdn.tailwindcss.com"></script>
         <style>
             @page {
@@ -82,7 +84,7 @@
                             text-transform: uppercase;
                         "
                     >
-                        Invoice
+                        {{ document_type | default(value="Invoice") }}
                     </div>
                     <div
                         style="font-size: 0.82rem; color: #555; margin-top: 2px"
@@ -162,7 +164,9 @@
                 <strong>{{ invoice.date }}</strong>
             </div>
             <div>
-                <span style="color: #888">Due Date:</span>
+                <span style="color: #888"
+                    >{{ due_label | default(value="Due") }} Date:</span
+                >
                 <strong>{{ invoice.due }}</strong>
             </div>
             <div>

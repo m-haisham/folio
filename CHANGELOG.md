@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+#### Client management
+- `folio client new` — create a client interactively (same wizard previously only available inline during `folio new`).
+- `folio client list` — table of all clients: slug, name, email, contact.
+- `folio client show <slug>` — detailed view of a single client.
+
+#### Template system
+- Bundled document templates renamed from `invoice.html` → `document.html`. Custom templates using `invoice.html` continue to work as a legacy fallback.
+- Each bundled template now ships with `email.html` — a Tera plain-text template for the email body, styled to match the template's personality. Resolution order: custom `email.html` → bundled `email.html` → `[email.templates].body` in config → hardcoded default.
+- `folio templates export` now exports `document.html`, `email.html`, and `template.toml`.
+- `render_email_body` and `render_email_subject` now receive `document_type` in their Tera context so email templates can reference `{{ document_type }}` ("Invoice" or "Quote").
+- Default email subject updated to `{{ document_type }} {{ invoice.id }} from {{ me.company }}`.
+- `[email.templates].body` removed from the `folio init` generated config; body is now driven by the template's `email.html`.
+
+#### First-class invoice and quote parity
+- `folio invoice` subcommand group — mirrors `folio quote` exactly: `new`, `list`, `build`, `send`, `paid`, `void`, `preview`, `summary`. Invoices and quotes are now equal citizens at the CLI level.
+- `folio new --type invoice|quote` — global create command now prompts for document type when `--type` is not given.
+- `folio build <id>` — auto-detects invoice vs quote from the filesystem; no flag needed.
+- `folio send <id>` — auto-detects invoice vs quote from the filesystem.
+- `folio preview <id>` — auto-detects invoice vs quote from the filesystem.
+- `folio list` now shows **both** invoices and quotes by default with a `TYPE` column. Use `--type invoice` or `--type quote` to filter to one kind.
+- `folio summary` now includes a **Quote Pipeline** section (total quoted, accepted, pending, by-status breakdown) after the invoice financials.
+- `[invoice]` section in `folio.toml` — type-specific defaults for `template`, `id_format`, `due_days`; takes priority over shared `[defaults]`.
+- `[quote]` section in `folio.toml` — type-specific defaults for `template`, `id_format`, `expires_days`; takes priority over shared `[defaults]`.
+- `[defaults]` is now the truly shared fallback layer (currency, tax_rate, template, primary_color, notes); type-specific settings (`id_format`, `due_days`, `expires_days`) live in `[invoice]`/`[quote]` only.
+- `folio init` no longer creates empty directories — they are created on demand when the first document is saved.
+- `folio init` now writes a detailed `README.md` to the new repo with a full quick-start guide, client/document examples, and layout reference.
+
+#### Quotations (first introduced this release)
+- New `Quote` document type stored as `quotes/{year}/{id}.toml` — same line-item model as invoices but with an `expires` date and its own status lifecycle.
+- `folio quote new` — interactive wizard to create a quote with auto-generated `QUO-{year}-{seq:03}` IDs.
+- `folio quote list` — colour-coded table (expired=red, sent=yellow, accepted=green, draft/declined=dim) with PDF freshness indicator.
+- `folio quote build` — render a quote to PDF using any bundled or custom template.
+- `folio quote send` — email a quote as a PDF attachment and record the `[sent]` block.
+- `folio quote accept` — mark a quote as accepted; `--convert` automatically creates an invoice from the quote's line items and records the resulting invoice ID in `[accepted].invoice_id`.
+- `folio quote decline` — mark a quote as declined with an optional `--reason`.
+- `folio quote preview` — open the rendered quote HTML in the default browser.
+- Quote status lifecycle: `draft` → `sent` → `accepted` / `declined` / `expired` (auto, when `expires < today`).
+- `folio init` now creates the `quotes/` directory as part of the standard scaffold.
+- All six bundled templates updated to use `document_type` and `due_label` Tera variables; quotes render with `Quote` heading and `Expires` date label; existing invoices are unaffected.
+
+
+
 ## [0.1.1] - 2026-05-25
 
 ### Added

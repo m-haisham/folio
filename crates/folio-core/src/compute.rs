@@ -24,6 +24,7 @@ pub fn compute_invoice(
         .template
         .clone()
         .or_else(|| client.template.clone())
+        .or_else(|| config.invoice.as_ref().and_then(|i| i.template.clone()))
         .or_else(|| config.defaults.template.clone())
         .unwrap_or_else(|| "basic".to_string());
 
@@ -39,7 +40,11 @@ pub fn compute_invoice(
         .or_else(|| client.defaults.as_ref().and_then(|d| d.notes.clone()))
         .or_else(|| config.defaults.notes.clone());
 
-    let due_days = client.due_days.or(config.defaults.due_days).unwrap_or(30);
+    let due_days = client
+        .due_days
+        .or_else(|| config.invoice.as_ref().and_then(|i| i.due_days))
+        .or(config.defaults.due_days)
+        .unwrap_or(30);
 
     let due = invoice
         .due

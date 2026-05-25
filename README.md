@@ -127,13 +127,15 @@ username = "you@gmail.com"
 
 [email.templates]
 subject = "Invoice {{ invoice.id }} from {{ me.company }}"
-body    = """
-Hi {{ client.contact }},
-
-Please find attached invoice {{ invoice.id }}.
-
-{{ me.name }}
-"""
+# body is the fallback used only when no email.html exists for the active template.
+# Normally you don't need this — edit templates/{name}/email.html instead.
+# body = """
+# Hi {{ client.contact }},
+#
+# Please find attached invoice {{ invoice.id }}.
+#
+# {{ me.name }}
+# """
 ```
 
 ### `clients/acme.toml`
@@ -585,7 +587,7 @@ Each template folder contains two files:
 | File | Purpose |
 |---|---|
 | `document.html` | PDF/preview template (Tera HTML) |
-| `email.html` | Email body template (Tera plain text) |
+| `email.html` | Themed HTML email body (Tera HTML, email-client-safe) |
 
 Create `templates/{name}/document.html` to define the document layout, and `templates/{name}/email.html` for the email body. The directory name is the template name. Custom templates shadow bundled ones of the same name.
 
@@ -597,29 +599,50 @@ folio templates export basic --output templates/studio
 folio preview INV-2026-001 --template studio
 ```
 
+### Email template selection
+
+The email body template is chosen using the same `template` name that drives the PDF — `basic`, `modern`, etc. — resolved through the same chain:
+
+```
+invoice.toml [template]
+  ← clients/{slug}.toml [template]
+    ← folio.toml [defaults.template]
+      ← "basic" (hardcoded fallback)
+```
+
+With that name, folio looks for an `email.html` in this order:
+
+```
+templates/{name}/email.html        ← custom (your templates/ directory)
+  ← bundled {name}/email.html      ← shipped with folio
+    ← folio.toml [email.templates].body
+      ← built-in one-liner fallback
+```
+
+So an invoice using `template = "modern"` automatically uses the `modern` email design. To customise a template's email, export it and edit `email.html`:
+
+```sh
+folio templates export modern --output templates/modern
+# edit templates/modern/email.html — invoices with template = "modern" pick it up automatically
+```
+
+The subject line always comes from `folio.toml [email.templates].subject` — there is no per-template subject file.
+
 ### Email template context
 
-`email.html` receives the same context as `document.html` plus `document_type`:
+`email.html` is a full HTML email (table-based layout, inline CSS — safe for Gmail, Apple Mail, and Outlook). It receives the same Tera context as `document.html`:
 
 ```
 invoice.id, .currency, .total, .due, .notes, .status
 client.contact, .name, .email
 me.name, .company, .email
-document_type   — "Invoice" or "Quote"
+document_type          — "Invoice" or "Quote"
+theme                  — present when primary_color is configured (same palette as PDF)
+  .primary, .primary_mid, .primary_light, .primary_dark
+  .primary_alpha_low, .primary_alpha_very_low
 ```
 
-Example `email.html`:
-
-```
-Hi {% if client.contact %}{{ client.contact }}{% else %}there{% endif %},
-
-Please find attached {{ document_type | lower }} {{ invoice.id }}
-for {{ invoice.currency }} {{ invoice.total }}.
-
-{{ me.name }}
-```
-
-The email subject is set in `folio.toml [email.templates].subject`. The body from `email.html` takes priority over `[email.templates].body` if both are present.
+Use `{% if theme %}{{ theme.primary }}{% else %}#fallback{% endif %}` to apply the configured accent colour with a safe fallback when none is set — exactly as the bundled templates do.
 
 ### Template context
 

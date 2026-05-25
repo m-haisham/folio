@@ -92,19 +92,22 @@ async fn send_smtp(email_cfg: &EmailConfig, config: &FolioConfig, msg: EmailMess
             .map_err(|e| FolioError::Other(e.to_string()))?
     };
 
-    let creds = Credentials::new(smtp.username.clone(), password);
     let use_tls = smtp.tls.unwrap_or(true);
     let mailer = if use_tls {
-        AsyncSmtpTransport::<Tokio1Executor>::relay(&smtp.host)
+        let mut b = AsyncSmtpTransport::<Tokio1Executor>::relay(&smtp.host)
             .map_err(|e| FolioError::Other(e.to_string()))?
-            .credentials(creds)
-            .port(smtp.port)
-            .build()
+            .port(smtp.port);
+        if !password.is_empty() {
+            b = b.credentials(Credentials::new(smtp.username.clone(), password));
+        }
+        b.build()
     } else {
-        AsyncSmtpTransport::<Tokio1Executor>::builder_dangerous(&smtp.host)
-            .credentials(creds)
-            .port(smtp.port)
-            .build()
+        let mut b =
+            AsyncSmtpTransport::<Tokio1Executor>::builder_dangerous(&smtp.host).port(smtp.port);
+        if !password.is_empty() {
+            b = b.credentials(Credentials::new(smtp.username.clone(), password));
+        }
+        b.build()
     };
 
     mailer

@@ -23,7 +23,7 @@
         </style>
     </head>
     <body class="bg-white text-gray-900 font-sans">
-        <div style="padding: 48px 56px">
+        <div style="padding: 48px 56px 36px">
             <!-- Header -->
             <div class="flex justify-between items-start mb-12">
                 <div>
@@ -206,14 +206,26 @@
                 {{ invoice.notes }}
             </div>
             {% endif %}
+        </div>
 
-            <!-- Footer -->
-            <div
-                class="mt-16 text-[10px] text-gray-400 text-center tracking-widest uppercase"
-            >
+        <!-- Footer — fixed so it appears at the bottom of every page -->
+        <div
+            style="
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 36px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #fff;
+            "
+        >
+            <span class="text-[10px] text-gray-400 tracking-widest uppercase">
                 {{ me.name }}{% if me.company %} &nbsp;·&nbsp; {{ me.company
                 }}{% endif %}
-            </div>
+            </span>
         </div>
     </body>
 </html>

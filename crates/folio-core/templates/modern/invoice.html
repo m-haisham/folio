@@ -44,7 +44,7 @@
         <!-- Top accent stripe -->
         <div class="accent" style="height: 5px; width: 100%"></div>
 
-        <div style="padding: 48px 56px">
+        <div style="padding: 48px 56px 44px">
             <!-- Header -->
             <div class="flex justify-between items-start mb-14">
                 <div>
@@ -217,11 +217,19 @@
                 invoice.notes }}
             </div>
             {% endif %}
+        </div>
 
-            <!-- Footer -->
+        <!-- Footer — fixed so it appears at the bottom of every page -->
+        <div style="position: fixed; bottom: 0; left: 0; right: 0">
             <div
-                class="mt-14 pt-4 flex justify-between items-center text-[10px] text-gray-400 uppercase tracking-widest"
-                style="border-top: 1px solid #f3f4f6"
+                class="flex justify-between items-center text-[10px] text-gray-400 uppercase tracking-widest"
+                style="
+                    padding: 8px 56px;
+                    background: #fff;
+                    border-top: 1px solid #f3f4f6;
+                    height: 41px;
+                    box-sizing: border-box;
+                "
             >
                 <span
                     >{{ me.name }}{% if me.company %} · {{ me.company }}{% endif
@@ -229,9 +237,7 @@
                 >
                 <span>{{ me.email }}</span>
             </div>
+            <div class="accent" style="height: 3px; width: 100%"></div>
         </div>
-
-        <!-- Bottom accent stripe -->
-        <div class="accent" style="height: 3px; width: 100%"></div>
     </body>
 </html>

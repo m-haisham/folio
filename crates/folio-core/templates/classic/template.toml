@@ -1,0 +1,4 @@
+name = "classic"
+description = "Traditional invoice style with a ruled header and footer."
+author = "folio"
+version = "1.0.0"

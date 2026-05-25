@@ -1,6 +1,11 @@
-[package]
-name = "folio"
-version = "0.1.0"
-edition = "2024"
+[workspace]
+members = ["crates/folio-core", "crates/folio-cli"]
+resolver = "2"
 
-[dependencies]
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+toml = "0.8"
+thiserror = "1"
+eyre = "0.6"
+chrono = { version = "0.4", features = ["serde"] }
+rust_decimal = { version = "1", features = ["serde-with-str"] }

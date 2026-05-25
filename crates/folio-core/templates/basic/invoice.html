@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Invoice {{ invoice.id }}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @media print { body { -webkit-print-color-adjust: exact; } }
+  </style>
+</head>
+<body class="bg-white text-gray-900 font-sans p-10 max-w-3xl mx-auto">
+
+  <!-- Header: sender / invoice meta -->
+  <div class="flex justify-between items-start mb-10">
+    <div>
+      <div class="text-2xl font-bold">{{ me.name }}</div>
+      {% if me.company %}<div class="text-gray-500">{{ me.company }}</div>{% endif %}
+      <div class="text-gray-500">{{ me.email }}</div>
+      {% for line in me.address %}<div class="text-gray-500">{{ line }}</div>{% endfor %}
+    </div>
+    <div class="text-right">
+      <div class="text-3xl font-light tracking-wide uppercase text-gray-300">Invoice</div>
+      <div class="mt-2 text-lg font-semibold">{{ invoice.id }}</div>
+      <div class="text-gray-500 text-sm">Date: {{ invoice.date }}</div>
+      <div class="text-gray-500 text-sm">Due: {{ invoice.due }}</div>
+    </div>
+  </div>
+
+  <!-- Bill To -->
+  <div class="mb-8">
+    <div class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">Bill To</div>
+    <div class="font-semibold">{{ client.name }}</div>
+    {% if client.contact %}<div class="text-gray-600">{{ client.contact }}</div>{% endif %}
+    <div class="text-gray-600">{{ client.email }}</div>
+    {% for line in client.address %}<div class="text-gray-600">{{ line }}</div>{% endfor %}
+  </div>
+
+  <!-- Line Items -->
+  <table class="w-full text-sm mb-6">
+    <thead>
+      <tr class="border-b border-gray-200 text-xs uppercase tracking-widest text-gray-400">
+        <th class="text-left py-2 font-normal">Description</th>
+        <th class="text-right py-2 font-normal">Qty</th>
+        <th class="text-right py-2 font-normal">Unit</th>
+        <th class="text-right py-2 font-normal">Rate</th>
+        <th class="text-right py-2 font-normal">Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in invoice.items %}
+      <tr class="border-b border-gray-100">
+        <td class="py-2 pr-4">{{ item.description }}</td>
+        <td class="py-2 text-right">{{ item.quantity }}</td>
+        <td class="py-2 text-right text-gray-400">{{ item.unit | default(value="") }}</td>
+        <td class="py-2 text-right">{{ invoice.currency }} {{ item.rate }}</td>
+        <td class="py-2 text-right font-medium">{{ invoice.currency }} {{ item.total }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Totals -->
+  <div class="flex justify-end">
+    <div class="w-56 text-sm">
+      <div class="flex justify-between py-1">
+        <span class="text-gray-500">Subtotal</span>
+        <span>{{ invoice.currency }} {{ invoice.subtotal }}</span>
+      </div>
+      {% if invoice.tax_rate %}
+      <div class="flex justify-between py-1">
+        <span class="text-gray-500">Tax ({{ invoice.tax_rate }}%)</span>
+        <span>{{ invoice.currency }} {{ invoice.tax_amount }}</span>
+      </div>
+      {% endif %}
+      <div class="flex justify-between py-2 border-t border-gray-900 font-bold text-base mt-1">
+        <span>Total</span>
+        <span>{{ invoice.currency }} {{ invoice.total }}</span>
+      </div>
+      {% if invoice.paid %}
+      <div class="flex justify-between py-1 text-green-600">
+        <span>Paid</span>
+        <span>{{ invoice.currency }} {{ invoice.paid.amount }}</span>
+      </div>
+      <div class="flex justify-between py-1 font-semibold">
+        <span>Outstanding</span>
+        <span>{{ invoice.currency }} {{ invoice.outstanding }}</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if invoice.notes %}
+  <div class="mt-10 text-sm text-gray-500 border-t pt-4">
+    <div class="font-semibold mb-1 text-gray-700">Notes</div>
+    {{ invoice.notes }}
+  </div>
+  {% endif %}
+
+</body>
+</html>

@@ -261,7 +261,7 @@
 
         <!-- BODY -->
         <div style="padding: 44px 60px 52px; background: var(--paper)">
-            <!-- Billed To + Status -->
+            <!-- Billed To -->
             <div
                 style="
                     display: flex;
@@ -322,23 +322,6 @@
                         {{ line }}
                     </div>
                     {% endfor %}
-                </div>
-                <!-- Status badge -->
-                <div>
-                    <div
-                        class="mono"
-                        style="
-                            font-size: 0.55rem;
-                            text-transform: uppercase;
-                            letter-spacing: 0.2em;
-                            padding: 5px 12px;
-                            border: 1px solid var(--rule-md);
-                            display: inline-block;
-                            color: var(--ink-muted);
-                        "
-                    >
-                        {{ invoice.status | replace(from="_", to=" ") }}
-                    </div>
                 </div>
             </div>
 

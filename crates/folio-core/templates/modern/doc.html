@@ -5,35 +5,144 @@
         <title>{{ title | default(value="Document") }}</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <style>
-            @page { margin: 0; }
+            @page {
+                margin: 0;
+            }
             @media print {
-                body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                body {
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
+                }
             }
             @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap");
-            body { font-family: "Inter", system-ui, sans-serif; }
-            html, body { margin: 0; padding: 0; width: 100%; padding-bottom: 52px; box-sizing: border-box; }
+            body {
+                font-family: "Inter", system-ui, sans-serif;
+            }
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                padding-bottom: 64px;
+                box-sizing: border-box;
+            }
 
-            .accent { background-color: #7c3aed; }
-            .accent-text { color: #7c3aed; }
-            .accent-light { background-color: #f5f3ff; }
+            .accent {
+                background-color: #7c3aed;
+            }
+            .accent-text {
+                color: #7c3aed;
+            }
+            .accent-light {
+                background-color: #f5f3ff;
+            }
 
-            .doc-body h1 { font-size: 1.4rem; font-weight: 700; margin: 1.5rem 0 0.5rem; }
-            .doc-body h2 { font-size: 1rem; font-weight: 700; margin: 1.4rem 0 0.4rem; text-transform: uppercase; letter-spacing: 0.1em; color: #7c3aed; }
-            .doc-body h3 { font-size: 0.95rem; font-weight: 700; margin: 1rem 0 0.3rem; }
-            .doc-body p  { margin: 0.75rem 0; line-height: 1.7; }
-            .doc-body ul, .doc-body ol { margin: 0.75rem 0 0.75rem 1.5rem; }
-            .doc-body li { margin-bottom: 0.25rem; line-height: 1.65; }
-            .doc-body blockquote { border-left: 3px solid #7c3aed; margin: 1rem 0; padding: 0.5rem 1rem; color: #6b7280; background: #f5f3ff; border-radius: 0 4px 4px 0; }
-            .doc-body code { background: #f5f3ff; padding: 0.1em 0.35em; border-radius: 3px; font-size: 0.82em; font-family: ui-monospace, monospace; color: #5b21b6; }
-            .doc-body pre  { background: #1e1b4b; color: #e0e7ff; padding: 1rem; border-radius: 8px; overflow-x: auto; margin: 1rem 0; }
-            .doc-body pre code { background: none; padding: 0; color: #e0e7ff; }
-            .doc-body table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.88em; }
-            .doc-body th { text-align: left; padding: 0.5rem 0.75rem; background: #7c3aed; color: #fff; font-weight: 600; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; }
-            .doc-body td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #f3f4f6; }
-            .doc-body tr:nth-child(even) td { background: #faf5ff; }
-            .doc-body a  { color: #7c3aed; font-weight: 500; }
-            .doc-body hr { border: none; border-top: 2px solid #ede9fe; margin: 1.5rem 0; }
-            .doc-body strong { font-weight: 700; }
+            .doc-body h1 {
+                font-size: 1.4rem;
+                font-weight: 700;
+                margin: 2.25rem 0 0.75rem;
+            }
+            .doc-body h2 {
+                font-size: 1rem;
+                font-weight: 700;
+                margin: 2rem 0 0.6rem;
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+                color: #7c3aed;
+            }
+            .doc-body h3 {
+                font-size: 0.95rem;
+                font-weight: 700;
+                margin: 1.5rem 0 0.5rem;
+            }
+            .doc-body p {
+                margin: 1rem 0;
+                line-height: 1.75;
+            }
+            .doc-body ul,
+            .doc-body ol {
+                margin: 1rem 0 1rem 1.5rem;
+            }
+            .doc-body ul {
+                list-style-type: disc;
+            }
+            .doc-body ol {
+                list-style-type: decimal;
+            }
+            .doc-body ul ul {
+                list-style-type: circle;
+            }
+            .doc-body ul ul ul {
+                list-style-type: square;
+            }
+            .doc-body li {
+                margin-bottom: 0.25rem;
+                line-height: 1.65;
+            }
+            .doc-body blockquote {
+                border-left: 3px solid #7c3aed;
+                margin: 1.5rem 0;
+                padding: 0.5rem 1rem;
+                color: #6b7280;
+                background: #f5f3ff;
+                border-radius: 0 4px 4px 0;
+            }
+            .doc-body code {
+                background: #f5f3ff;
+                padding: 0.1em 0.35em;
+                border-radius: 3px;
+                font-size: 0.82em;
+                font-family: ui-monospace, monospace;
+                color: #5b21b6;
+            }
+            .doc-body pre {
+                background: #1e1b4b;
+                color: #e0e7ff;
+                padding: 1rem;
+                border-radius: 8px;
+                overflow-x: auto;
+                margin: 1rem 0;
+            }
+            .doc-body pre code {
+                background: none;
+                padding: 0;
+                color: #e0e7ff;
+            }
+            .doc-body table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 1rem 0;
+                font-size: 0.88em;
+            }
+            .doc-body th {
+                text-align: left;
+                padding: 0.5rem 0.75rem;
+                background: #7c3aed;
+                color: #fff;
+                font-weight: 600;
+                font-size: 0.72rem;
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+            }
+            .doc-body td {
+                padding: 0.5rem 0.75rem;
+                border-bottom: 1px solid #f3f4f6;
+            }
+            .doc-body tr:nth-child(even) td {
+                background: #faf5ff;
+            }
+            .doc-body a {
+                color: #7c3aed;
+                font-weight: 500;
+            }
+            .doc-body hr {
+                border: none;
+                border-top: 2px solid #ede9fe;
+                margin: 2rem 0;
+            }
+            .doc-body strong {
+                font-weight: 700;
+            }
         </style>
         {% if theme %}
         <style>
@@ -52,43 +161,76 @@
     </head>
     <body class="bg-white text-gray-900 text-sm">
         <!-- Top accent stripe -->
-        <div class="accent" style="height: 5px; width: 100%;"></div>
+        <div class="accent" style="height: 5px; width: 100%"></div>
 
-        <div style="padding: 48px 56px 36px;">
+        <div style="padding: 72px 56px 56px">
             <!-- Title block -->
-            <div style="margin-bottom: 2.5rem;">
-                <h1 class="accent-text" style="font-size: 2.25rem; font-weight: 900; letter-spacing: -0.03em; margin: 0 0 0.6rem; line-height: 1.1;">
+            <div style="margin-bottom: 2.5rem">
+                <h1
+                    class="accent-text"
+                    style="
+                        font-size: 2.25rem;
+                        font-weight: 900;
+                        letter-spacing: -0.03em;
+                        margin: 0 0 0.6rem;
+                        line-height: 1.1;
+                    "
+                >
                     {{ title | default(value="") }}
                 </h1>
-                <div style="display: flex; gap: 1.5rem; align-items: center; font-size: 0.75rem; color: #9ca3af; flex-wrap: wrap;">
+                <div
+                    style="
+                        display: flex;
+                        gap: 1.5rem;
+                        align-items: center;
+                        font-size: 0.75rem;
+                        color: #9ca3af;
+                        flex-wrap: wrap;
+                    "
+                >
                     {% if author %}
                     <span>{{ author }}</span>
                     {% elif me and me.name %}
                     <span>{{ me.name }}</span>
-                    {% endif %}
-                    {% if date %}
+                    {% endif %} {% if date %}
                     <span>{{ date }}</span>
                     {% endif %}
                 </div>
             </div>
 
             <!-- Body -->
-            <div class="doc-body">
-                {{ body | safe }}
-            </div>
+            <div class="doc-body">{{ body | safe }}</div>
         </div>
 
         <!-- Footer -->
-        <div style="position: fixed; bottom: 0; left: 0; right: 0;">
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 56px; background: #fff; border-top: 1px solid #f3f4f6; height: 41px; box-sizing: border-box; font-size: 0.625rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.1em;">
+        <div style="position: fixed; bottom: 0; left: 0; right: 0">
+            <div
+                style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 8px 56px;
+                    background: #fff;
+                    border-top: 1px solid #f3f4f6;
+                    height: 41px;
+                    box-sizing: border-box;
+                    font-size: 0.625rem;
+                    color: #9ca3af;
+                    text-transform: uppercase;
+                    letter-spacing: 0.1em;
+                "
+            >
                 {% if me and me.name %}
-                <span>{{ me.name }}{% if me.company %} · {{ me.company }}{% endif %}</span>
+                <span
+                    >{{ me.name }}{% if me.company %} · {{ me.company }}{% endif
+                    %}</span
+                >
                 {% else %}
                 <span></span>
-                {% endif %}
-                {% if me and me.email %}<span>{{ me.email }}</span>{% endif %}
+                {% endif %} {% if me and me.email %}<span>{{ me.email }}</span
+                >{% endif %}
             </div>
-            <div class="accent" style="height: 3px; width: 100%;"></div>
+            <div class="accent" style="height: 3px; width: 100%"></div>
         </div>
     </body>
 </html>

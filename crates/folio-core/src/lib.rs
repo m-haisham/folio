@@ -1,5 +1,6 @@
 pub mod compute;
 pub mod config;
+pub mod doc_store;
 pub mod email;
 pub mod error;
 pub mod index;

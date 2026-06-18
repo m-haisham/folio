@@ -1,5 +1,6 @@
 pub mod build;
 pub mod client;
+pub mod doc;
 pub mod init;
 pub mod invoice;
 pub mod list;

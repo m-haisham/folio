@@ -60,23 +60,25 @@ pub async fn run(args: RenderArgs) -> Result<()> {
 
     // Resolve folio config (optional — graceful fallback outside a repo)
     let cwd = std::env::current_dir()?;
-    let (me, templates_dir) = if let Some(root) = find_root(&cwd) {
+    let (me, templates_dir, config_default_template) = if let Some(root) = find_root(&cwd) {
         match load_config(&root) {
             Ok(config) => {
                 let store = FilesystemStore::with_paths(&root, config.paths().clone());
-                (config.me.clone(), store.templates_dir())
+                let default_tmpl = config.defaults.template.clone();
+                (config.me.clone(), store.templates_dir(), default_tmpl)
             }
-            Err(_) => (MeConfig::default(), PathBuf::from("templates")),
+            Err(_) => (MeConfig::default(), PathBuf::from("templates"), None),
         }
     } else {
-        (MeConfig::default(), PathBuf::from("templates"))
+        (MeConfig::default(), PathBuf::from("templates"), None)
     };
 
-    // Resolve template name (CLI flag > frontmatter > folio.toml default > "basic")
+    // Resolve template name: CLI flag > frontmatter > folio.toml default > "basic"
     let template_name = args
         .template
         .as_deref()
         .or(doc.template.as_deref())
+        .or(config_default_template.as_deref())
         .unwrap_or("basic")
         .to_string();
 

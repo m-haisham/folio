@@ -70,6 +70,8 @@ enum Commands {
     Quote(cmd::quote::QuoteArgs),
     /// Render a Markdown file to PDF using a folio template.
     Render(cmd::render::RenderArgs),
+    /// Manage client-scoped Markdown documents.
+    Doc(cmd::doc::DocArgs),
 }
 
 #[tokio::main]
@@ -94,6 +96,7 @@ async fn main() {
         Commands::Update(args) => cmd::update::run(args).await,
         Commands::Quote(args) => cmd::quote::run(args).await,
         Commands::Render(args) => cmd::render::run(args).await,
+        Commands::Doc(args) => cmd::doc::run(args).await,
     };
 
     if let Err(err) = result {

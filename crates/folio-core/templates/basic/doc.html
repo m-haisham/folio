@@ -5,28 +5,123 @@
         <title>{{ title | default(value="Document") }}</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <style>
-            @page { margin: 0; }
-            @media print {
-                body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            @page {
+                margin: 0;
             }
-            html, body { margin: 0; padding: 0; width: 100%; }
-            body { padding-bottom: 52px; box-sizing: border-box; }
-            .doc-body h1 { font-size: 1.5rem; font-weight: 700; margin: 1.5rem 0 0.5rem; }
-            .doc-body h2 { font-size: 1.2rem; font-weight: 600; margin: 1.25rem 0 0.4rem; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.25rem; }
-            .doc-body h3 { font-size: 1rem; font-weight: 600; margin: 1rem 0 0.3rem; }
-            .doc-body p  { margin: 0.75rem 0; line-height: 1.7; }
-            .doc-body ul, .doc-body ol { margin: 0.75rem 0 0.75rem 1.5rem; }
-            .doc-body li { margin-bottom: 0.25rem; line-height: 1.65; }
-            .doc-body blockquote { border-left: 3px solid #d1d5db; margin: 1rem 0; padding: 0.5rem 1rem; color: #6b7280; font-style: italic; }
-            .doc-body code { background: #f3f4f6; padding: 0.1em 0.35em; border-radius: 3px; font-size: 0.85em; font-family: ui-monospace, monospace; }
-            .doc-body pre  { background: #f3f4f6; padding: 1rem; border-radius: 6px; overflow-x: auto; margin: 1rem 0; }
-            .doc-body pre code { background: none; padding: 0; }
-            .doc-body table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9em; }
-            .doc-body th { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 2px solid #e5e7eb; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; }
-            .doc-body td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #f3f4f6; }
-            .doc-body a  { color: #111827; text-decoration: underline; }
-            .doc-body hr { border: none; border-top: 1px solid #e5e7eb; margin: 1.5rem 0; }
-            .doc-body strong { font-weight: 600; }
+            @media print {
+                body {
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
+                }
+            }
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+                width: 100%;
+            }
+            body {
+                padding-bottom: 64px;
+                box-sizing: border-box;
+            }
+            .doc-body h1 {
+                font-size: 1.5rem;
+                font-weight: 700;
+                margin: 2.25rem 0 0.75rem;
+            }
+            .doc-body h2 {
+                font-size: 1.2rem;
+                font-weight: 600;
+                margin: 2rem 0 0.6rem;
+                border-bottom: 1px solid #e5e7eb;
+                padding-bottom: 0.25rem;
+            }
+            .doc-body h3 {
+                font-size: 1rem;
+                font-weight: 600;
+                margin: 1.5rem 0 0.5rem;
+            }
+            .doc-body p {
+                margin: 1rem 0;
+                line-height: 1.75;
+            }
+            .doc-body ul,
+            .doc-body ol {
+                margin: 1rem 0 1rem 1.5rem;
+            }
+            .doc-body ul {
+                list-style-type: disc;
+            }
+            .doc-body ol {
+                list-style-type: decimal;
+            }
+            .doc-body ul ul {
+                list-style-type: circle;
+            }
+            .doc-body ul ul ul {
+                list-style-type: square;
+            }
+            .doc-body li {
+                margin-bottom: 0.25rem;
+                line-height: 1.65;
+            }
+            .doc-body blockquote {
+                border-left: 3px solid #d1d5db;
+                margin: 1.5rem 0;
+                padding: 0.5rem 1rem;
+                color: #6b7280;
+                font-style: italic;
+            }
+            .doc-body code {
+                background: #f3f4f6;
+                padding: 0.1em 0.35em;
+                border-radius: 3px;
+                font-size: 0.85em;
+                font-family: ui-monospace, monospace;
+            }
+            .doc-body pre {
+                background: #f3f4f6;
+                padding: 1rem;
+                border-radius: 6px;
+                overflow-x: auto;
+                margin: 1rem 0;
+            }
+            .doc-body pre code {
+                background: none;
+                padding: 0;
+            }
+            .doc-body table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 1rem 0;
+                font-size: 0.9em;
+            }
+            .doc-body th {
+                text-align: left;
+                padding: 0.5rem 0.75rem;
+                border-bottom: 2px solid #e5e7eb;
+                font-weight: 600;
+                font-size: 0.75rem;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                color: #6b7280;
+            }
+            .doc-body td {
+                padding: 0.5rem 0.75rem;
+                border-bottom: 1px solid #f3f4f6;
+            }
+            .doc-body a {
+                color: #111827;
+                text-decoration: underline;
+            }
+            .doc-body hr {
+                border: none;
+                border-top: 1px solid #e5e7eb;
+                margin: 2rem 0;
+            }
+            .doc-body strong {
+                font-weight: 600;
+            }
         </style>
         {% if theme %}
         <style>
@@ -39,38 +134,80 @@
     </head>
     <body class="bg-white text-gray-900 font-sans text-sm">
         {% if theme %}
-        <div class="doc-accent-bar" style="height: 4px; width: 100%;"></div>
+        <div class="doc-accent-bar" style="height: 4px; width: 100%"></div>
         {% endif %}
 
-        <div style="padding: 48px 56px 36px">
+        <div style="padding: 72px 56px 56px">
             <!-- Title block -->
-            <div style="margin-bottom: 2.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid #e5e7eb;">
-                <h1 style="font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 0.5rem; line-height: 1.2;">
+            <div
+                style="
+                    margin-bottom: 2.5rem;
+                    padding-bottom: 1.5rem;
+                    border-bottom: 1px solid #e5e7eb;
+                "
+            >
+                <h1
+                    style="
+                        font-size: 2rem;
+                        font-weight: 700;
+                        letter-spacing: -0.02em;
+                        margin: 0 0 0.5rem;
+                        line-height: 1.2;
+                    "
+                >
                     {{ title | default(value="") }}
                 </h1>
-                <div style="display: flex; gap: 1.5rem; align-items: center; color: #6b7280; font-size: 0.8rem; margin-top: 0.5rem; flex-wrap: wrap;">
+                <div
+                    style="
+                        display: flex;
+                        gap: 1.5rem;
+                        align-items: center;
+                        color: #6b7280;
+                        font-size: 0.8rem;
+                        margin-top: 0.5rem;
+                        flex-wrap: wrap;
+                    "
+                >
                     {% if author %}
                     <span>{{ author }}</span>
                     {% elif me and me.name %}
                     <span>{{ me.name }}</span>
-                    {% endif %}
-                    {% if date %}
+                    {% endif %} {% if date %}
                     <span>{{ date }}</span>
                     {% endif %}
                 </div>
             </div>
 
             <!-- Body -->
-            <div class="doc-body">
-                {{ body | safe }}
-            </div>
+            <div class="doc-body">{{ body | safe }}</div>
         </div>
 
         <!-- Footer -->
         {% if me and me.name %}
-        <div style="position: fixed; bottom: 0; left: 0; right: 0; height: 36px; display: flex; align-items: center; justify-content: center; background: #fff; border-top: 1px solid #f3f4f6;">
-            <span style="font-size: 0.625rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.1em;">
-                {{ me.name }}{% if me.company %} &nbsp;·&nbsp; {{ me.company }}{% endif %}
+        <div
+            style="
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 36px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #fff;
+                border-top: 1px solid #f3f4f6;
+            "
+        >
+            <span
+                style="
+                    font-size: 0.625rem;
+                    color: #9ca3af;
+                    text-transform: uppercase;
+                    letter-spacing: 0.1em;
+                "
+            >
+                {{ me.name }}{% if me.company %} &nbsp;·&nbsp; {{ me.company
+                }}{% endif %}
             </span>
         </div>
         {% endif %}

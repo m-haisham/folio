@@ -88,6 +88,12 @@ impl FilesystemStore {
         self.root.join(self.paths.templates())
     }
 
+    /// Absolute path to the documents directory for a given client slug:
+    /// `{clients_dir}/{slug}/documents`.
+    pub fn documents_dir(&self, client_slug: &str) -> PathBuf {
+        self.clients_dir().join(client_slug).join("documents")
+    }
+
     /// Absolute path to a quote TOML, e.g. `{quotes}/{year}/{id}.toml`.
     pub fn quote_path(&self, id: &str) -> PathBuf {
         self.root

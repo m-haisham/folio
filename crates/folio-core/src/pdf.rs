@@ -32,8 +32,8 @@ impl PdfMargins {
     /// Standard document margins: 0.75" top/bottom, 0.9" left/right.
     pub fn document() -> Self {
         Self {
-            top: 0.8,
-            bottom: 1.1,
+            top: 0.7,
+            bottom: 0.2,
             left: 0.8,
             right: 0.8,
         }

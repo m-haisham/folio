@@ -24,6 +24,7 @@
 
             @page {
                 background: var(--paper);
+                padding-bottom: 44px;
             }
 
             html,
@@ -35,7 +36,7 @@
                 box-sizing: border-box;
             }
             body {
-                padding-bottom: 52px;
+                padding-bottom: 44px;
                 color: var(--ink);
                 font-family: "Inter", system-ui, sans-serif;
                 font-weight: 300;
@@ -161,9 +162,21 @@
                 font-weight: 500;
             }
 
-            .doc-body h1, .doc-body h2, .doc-body h3 { break-after: avoid; page-break-after: avoid; }
-            .doc-body h1 + p, .doc-body h2 + p, .doc-body h3 + p,
-            .doc-body h1 + ul, .doc-body h2 + ul, .doc-body h3 + ul { break-before: avoid; page-break-before: avoid; }
+            .doc-body h1,
+            .doc-body h2,
+            .doc-body h3 {
+                break-after: avoid;
+                page-break-after: avoid;
+            }
+            .doc-body h1 + p,
+            .doc-body h2 + p,
+            .doc-body h3 + p,
+            .doc-body h1 + ul,
+            .doc-body h2 + ul,
+            .doc-body h3 + ul {
+                break-before: avoid;
+                page-break-before: avoid;
+            }
         </style>
         {% if theme %}
         <style>

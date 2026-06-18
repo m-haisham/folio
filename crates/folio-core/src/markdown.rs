@@ -14,7 +14,7 @@ use pulldown_cmark::{Options, Parser, html};
 /// The result of parsing a Markdown document.
 #[derive(Debug, Clone, Default)]
 pub struct RenderedDoc {
-    /// Document title — from frontmatter `title:` or the first `# Heading`.
+    /// Document title — always taken from the first `# Heading` in the body.
     pub title: String,
     /// Rendered HTML fragment (the body, without the title heading).
     pub body_html: String,
@@ -46,14 +46,11 @@ pub fn parse_doc(source: &str) -> RenderedDoc {
     html::push_html(&mut full_html, parser);
 
     // --- title extraction ---
-    // Frontmatter title wins; otherwise lift the first `# Heading` from the body.
-    let (title, body_html) = if fm.title.is_some() {
-        (fm.title.unwrap_or_default(), full_html)
-    } else {
-        match lift_h1(&full_html) {
-            Some((t, rest)) => (t, rest),
-            None => (String::new(), full_html),
-        }
+    // Always lift the first `# Heading` from the body as the title.
+    // Frontmatter `title:` is intentionally ignored — use a `#` heading.
+    let (title, body_html) = match lift_h1(&full_html) {
+        Some((t, rest)) => (t, rest),
+        None => (String::new(), full_html),
     };
 
     RenderedDoc {
@@ -98,7 +95,6 @@ fn split_frontmatter(source: &str) -> (Option<String>, &str) {
 
 #[derive(Default)]
 struct Frontmatter {
-    title: Option<String>,
     date: Option<String>,
     author: Option<String>,
     template: Option<String>,
@@ -124,7 +120,6 @@ fn parse_frontmatter(yaml: &str) -> Frontmatter {
         map.get(key).and_then(|v| v.as_str()).map(|s| s.to_string())
     };
 
-    fm.title = get_str("title");
     fm.date = get_str("date");
     fm.author = get_str("author");
     fm.template = get_str("template");
@@ -176,21 +171,22 @@ mod tests {
     }
 
     #[test]
-    fn test_frontmatter_title() {
+    fn test_frontmatter_no_heading() {
+        // No # heading — title is empty, frontmatter `title:` is ignored.
         let md = "---\ntitle: My Doc\ndate: 2026-01-01\n---\n\nBody text.";
         let doc = parse_doc(md);
-        assert_eq!(doc.title, "My Doc");
+        assert_eq!(doc.title, "");
         assert_eq!(doc.date.as_deref(), Some("2026-01-01"));
         assert!(doc.body_html.contains("Body text."));
     }
 
     #[test]
-    fn test_frontmatter_overrides_h1() {
+    fn test_frontmatter_title_ignored() {
         let md = "---\ntitle: FM Title\n---\n\n# H1 Title\n\nBody.";
         let doc = parse_doc(md);
-        assert_eq!(doc.title, "FM Title");
-        // h1 stays in body when frontmatter title wins
-        assert!(doc.body_html.contains("<h1"));
+        // frontmatter title is ignored; heading wins
+        assert_eq!(doc.title, "H1 Title");
+        assert!(!doc.body_html.contains("<h1"));
     }
 
     #[test]

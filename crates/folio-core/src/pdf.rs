@@ -33,7 +33,7 @@ impl PdfMargins {
     pub fn document() -> Self {
         Self {
             top: 0.7,
-            bottom: 0.2,
+            bottom: 0.4,
             left: 0.8,
             right: 0.8,
         }

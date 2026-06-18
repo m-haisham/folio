@@ -11,6 +11,11 @@
                     print-color-adjust: exact;
                 }
             }
+
+            @page {
+                background: #f8fafc;
+            }
+
             html,
             body {
                 margin: 0;
@@ -145,9 +150,21 @@
                 font-weight: 700;
             }
 
-            .doc-body h1, .doc-body h2, .doc-body h3 { break-after: avoid; page-break-after: avoid; }
-            .doc-body h1 + p, .doc-body h2 + p, .doc-body h3 + p,
-            .doc-body h1 + ul, .doc-body h2 + ul, .doc-body h3 + ul { break-before: avoid; page-break-before: avoid; }
+            .doc-body h1,
+            .doc-body h2,
+            .doc-body h3 {
+                break-after: avoid;
+                page-break-after: avoid;
+            }
+            .doc-body h1 + p,
+            .doc-body h2 + p,
+            .doc-body h3 + p,
+            .doc-body h1 + ul,
+            .doc-body h2 + ul,
+            .doc-body h3 + ul {
+                break-before: avoid;
+                page-break-before: avoid;
+            }
         </style>
         {% if theme %}
         <style>

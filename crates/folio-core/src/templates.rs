@@ -370,6 +370,26 @@ pub fn render_email_body(
     Ok(tera.render("body.html", &ctx)?)
 }
 
+/// Return the `doc_footer.html` source for a named template.
+/// Returns `None` if no footer partial exists (footer will be omitted).
+pub fn get_doc_footer_html(name: &str, templates_dir: &Path) -> Option<String> {
+    // Custom template first
+    let custom = templates_dir.join(name).join("doc_footer.html");
+    if custom.exists() {
+        return fs::read_to_string(&custom).ok();
+    }
+    // Bundled
+    let key = format!("{}/doc_footer.html", name);
+    if let Some(file) = BundledTemplates::get(&key) {
+        return Some(String::from_utf8_lossy(file.data.as_ref()).to_string());
+    }
+    // Fallback to basic
+    if name != "basic" {
+        return get_doc_footer_html("basic", templates_dir);
+    }
+    None
+}
+
 /// Render a Markdown-sourced document to HTML using a `doc.html` template.
 ///
 /// The Tera context exposes: `title`, `body`, `date`, `author`, `me`, `theme`.
@@ -381,7 +401,29 @@ pub fn render_doc_html(
 ) -> Result<String> {
     let mut tera = Tera::default();
     tera.add_raw_template("doc.html", template_html)?;
+    let ctx = build_doc_context(doc, me, primary_color);
+    Ok(tera.render("doc.html", &ctx)?)
+}
 
+/// Render the footer partial (`doc_footer.html`) with the same context as the body.
+/// Returns `None` if `footer_template_html` is `None`.
+pub fn render_doc_footer_html(
+    footer_template_html: Option<&str>,
+    doc: &RenderedDoc,
+    me: &MeConfig,
+    primary_color: Option<&str>,
+) -> Result<Option<String>> {
+    let Some(tmpl) = footer_template_html else {
+        return Ok(None);
+    };
+    let mut tera = Tera::default();
+    tera.add_raw_template("doc_footer.html", tmpl)?;
+    let ctx = build_doc_context(doc, me, primary_color);
+    Ok(Some(tera.render("doc_footer.html", &ctx)?))
+}
+
+/// Build the shared Tera context used by both doc body and footer templates.
+fn build_doc_context(doc: &RenderedDoc, me: &MeConfig, primary_color: Option<&str>) -> Context {
     let mut ctx = Context::new();
     ctx.insert("title", &doc.title);
     ctx.insert("body", &doc.body_html);
@@ -392,14 +434,11 @@ pub fn render_doc_html(
         ctx.insert("author", author);
     }
     ctx.insert("me", me);
-
-    // Resolve primary color: doc frontmatter > caller override > nothing
     let color = doc.primary_color.as_deref().or(primary_color);
     if let Some(color) = color {
         if let Some(theme) = build_theme(color) {
             ctx.insert("theme", &theme);
         }
     }
-
-    Ok(tera.render("doc.html", &ctx)?)
+    ctx
 }

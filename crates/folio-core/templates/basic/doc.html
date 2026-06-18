@@ -5,6 +5,7 @@
         <title>{{ title | default(value="Document") }}</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <style>
+            @page { background: #fff; }
             @media print {
                 body {
                     -webkit-print-color-adjust: exact;
@@ -20,7 +21,6 @@
                 box-sizing: border-box;
             }
             body {
-                padding-bottom: 48px;
                 color: #111827;
                 font-family: system-ui, sans-serif;
                 font-size: 0.875rem;
@@ -193,34 +193,5 @@
             </div>
             <div class="doc-body">{{ body | safe }}</div>
         </div>
-
-        <!-- Footer -->
-        {% if me and me.name %}
-        <div
-            style="
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                height: 36px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: #fff;
-                border-top: 1px solid #f3f4f6;
-            "
-        >
-            <span
-                style="
-                    font-size: 0.625rem;
-                    color: #9ca3af;
-                    text-transform: uppercase;
-                    letter-spacing: 0.1em;
-                "
-                >{{ me.name }}{% if me.company %} · {{ me.company }}{% endif
-                %}</span
-            >
-        </div>
-        {% endif %}
     </body>
 </html>

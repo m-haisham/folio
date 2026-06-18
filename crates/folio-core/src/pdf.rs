@@ -9,7 +9,7 @@ const A4_HEIGHT_IN: f64 = 11.69;
 ///
 /// Use `PdfMargins::none()` for templates that manage their own layout via
 /// internal CSS padding (invoices, quotes). Use `PdfMargins::document()` for
-/// Markdown documents where Chrome should provide standard whitespace margins.
+/// Markdown documents where Chrome provides margins and renders the footer.
 #[derive(Debug, Clone, Copy)]
 pub struct PdfMargins {
     pub top: f64,
@@ -29,7 +29,8 @@ impl PdfMargins {
         }
     }
 
-    /// Standard document margins: 0.75" top/bottom, 0.9" left/right.
+    /// Standard document margins. Bottom is just enough for the footer band
+    /// (~8px text + 6px padding + 4px gap ≈ 0.25").
     pub fn document() -> Self {
         Self {
             top: 0.7,
@@ -40,7 +41,12 @@ impl PdfMargins {
     }
 }
 
-pub fn html_to_pdf(html: &str, output_path: &Path, margins: PdfMargins) -> Result<()> {
+pub fn html_to_pdf(
+    html: &str,
+    output_path: &Path,
+    margins: PdfMargins,
+    footer_html: Option<&str>,
+) -> Result<()> {
     use headless_chrome::{Browser, LaunchOptions, types::PrintToPdfOptions};
     use std::fs;
 
@@ -72,6 +78,7 @@ pub fn html_to_pdf(html: &str, output_path: &Path, margins: PdfMargins) -> Resul
     tab.wait_until_navigated()
         .map_err(|e| FolioError::Other(e.to_string()))?;
 
+    let use_footer = footer_html.is_some();
     let pdf_options = PrintToPdfOptions {
         paper_width: Some(A4_WIDTH_IN),
         paper_height: Some(A4_HEIGHT_IN),
@@ -80,6 +87,14 @@ pub fn html_to_pdf(html: &str, output_path: &Path, margins: PdfMargins) -> Resul
         margin_bottom: Some(margins.bottom),
         margin_left: Some(margins.left),
         margin_right: Some(margins.right),
+        display_header_footer: Some(use_footer),
+        // Chrome requires a non-empty header_template when display_header_footer is true.
+        header_template: if use_footer {
+            Some("<span></span>".into())
+        } else {
+            None
+        },
+        footer_template: footer_html.map(|s| s.to_string()),
         ..Default::default()
     };
 

@@ -385,7 +385,7 @@ pub async fn build_quote_one(
         .map_err(|e| eyre::eyre!("{}", e))?;
 
     fs::create_dir_all(output_path.parent().unwrap())?;
-    html_to_pdf(&html, &output_path, PdfMargins::none()).map_err(|e| eyre::eyre!("{}", e))?;
+    html_to_pdf(&html, &output_path, PdfMargins::none(), None).map_err(|e| eyre::eyre!("{}", e))?;
 
     index.record(id, &source_hash);
     println!("✓ Built {}", output_path.display());

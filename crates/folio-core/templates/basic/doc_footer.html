@@ -1,0 +1,28 @@
+<div
+    style="
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        background-color: #fff;
+        width: 100%;
+        box-sizing: border-box;
+        border-top: 1px solid #f3f4f6;
+        margin-top: 4px;
+    "
+>
+    <div
+        style="
+            font-family: system-ui, sans-serif;
+            font-size: 8px;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5px 0.8in 0;
+        "
+    >
+        {% if me and me.name %}{{ me.name }}{% if me.company %} · {{ me.company
+        }}{% endif %}{% endif %}
+    </div>
+</div>

@@ -19,7 +19,9 @@ use folio_core::{
     pdf::PdfMargins,
     pdf::html_to_pdf,
     store::FilesystemStore,
-    templates::{get_doc_template_html, render_doc_html},
+    templates::{
+        get_doc_footer_html, get_doc_template_html, render_doc_footer_html, render_doc_html,
+    },
 };
 use std::{fs, path::PathBuf};
 
@@ -234,14 +236,23 @@ fn build_one(
 
     let template_html = get_doc_template_html(template_name, &store.templates_dir())
         .map_err(|e| eyre::eyre!("{}", e))?;
+    let footer_tmpl = get_doc_footer_html(template_name, &store.templates_dir());
 
     let html = render_doc_html(&template_html, &doc, me, None).map_err(|e| eyre::eyre!("{}", e))?;
+    let footer_html = render_doc_footer_html(footer_tmpl.as_deref(), &doc, me, None)
+        .map_err(|e| eyre::eyre!("{}", e))?;
 
     if let Some(parent) = output_path.parent() {
         fs::create_dir_all(parent)?;
     }
 
-    html_to_pdf(&html, output_path, PdfMargins::document()).map_err(|e| eyre::eyre!("{}", e))?;
+    html_to_pdf(
+        &html,
+        output_path,
+        PdfMargins::document(),
+        footer_html.as_deref(),
+    )
+    .map_err(|e| eyre::eyre!("{}", e))?;
 
     let rel = doc_rel_path(source, &store.clients_dir(), slug);
     println!("✓ {}/{} → {}", slug, rel.display(), output_path.display());

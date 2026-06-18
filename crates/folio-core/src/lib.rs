@@ -3,6 +3,7 @@ pub mod config;
 pub mod email;
 pub mod error;
 pub mod index;
+pub mod markdown;
 pub mod pdf;
 pub mod quote_compute;
 pub mod store;

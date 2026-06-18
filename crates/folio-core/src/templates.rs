@@ -1,5 +1,6 @@
 use crate::{
     error::{FolioError, Result},
+    markdown::RenderedDoc,
     types::{ComputedInvoice, ComputedQuote, FolioConfig, MeConfig},
 };
 use rust_embed::RustEmbed;
@@ -206,6 +207,33 @@ pub fn get_email_template(name: &str, templates_dir: &Path) -> Option<String> {
     BundledTemplates::get(&key).map(|f| String::from_utf8_lossy(f.data.as_ref()).to_string())
 }
 
+/// Return the `doc.html` source for a named template, used for Markdown document rendering.
+///
+/// Falls back to `basic/doc.html` if the requested template has no `doc.html`.
+/// Custom templates (from `templates_dir`) take priority over bundled ones.
+pub fn get_doc_template_html(name: &str, templates_dir: &Path) -> Result<String> {
+    // Custom template first
+    let custom = templates_dir.join(name).join("doc.html");
+    if custom.exists() {
+        return Ok(fs::read_to_string(&custom)?);
+    }
+
+    // Bundled
+    let key = format!("{}/doc.html", name);
+    if let Some(file) = BundledTemplates::get(&key) {
+        return Ok(String::from_utf8_lossy(file.data.as_ref()).to_string());
+    }
+
+    // Fallback to basic
+    if name != "basic" {
+        return get_doc_template_html("basic", templates_dir);
+    }
+
+    Err(FolioError::TemplateNotFound {
+        name: format!("{}/doc.html", name),
+    })
+}
+
 pub fn export_template(name: &str, output: &Path) -> Result<()> {
     fs::create_dir_all(output)?;
 
@@ -340,4 +368,38 @@ pub fn render_email_body(
         }
     }
     Ok(tera.render("body.html", &ctx)?)
+}
+
+/// Render a Markdown-sourced document to HTML using a `doc.html` template.
+///
+/// The Tera context exposes: `title`, `body`, `date`, `author`, `me`, `theme`.
+pub fn render_doc_html(
+    template_html: &str,
+    doc: &RenderedDoc,
+    me: &MeConfig,
+    primary_color: Option<&str>,
+) -> Result<String> {
+    let mut tera = Tera::default();
+    tera.add_raw_template("doc.html", template_html)?;
+
+    let mut ctx = Context::new();
+    ctx.insert("title", &doc.title);
+    ctx.insert("body", &doc.body_html);
+    if let Some(ref date) = doc.date {
+        ctx.insert("date", date);
+    }
+    if let Some(ref author) = doc.author {
+        ctx.insert("author", author);
+    }
+    ctx.insert("me", me);
+
+    // Resolve primary color: doc frontmatter > caller override > nothing
+    let color = doc.primary_color.as_deref().or(primary_color);
+    if let Some(color) = color {
+        if let Some(theme) = build_theme(color) {
+            ctx.insert("theme", &theme);
+        }
+    }
+
+    Ok(tera.render("doc.html", &ctx)?)
 }

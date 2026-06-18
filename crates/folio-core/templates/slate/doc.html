@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>{{ title | default(value="Document") }}</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+            @page { margin: 0; }
+            @media print {
+                body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            }
+            body {
+                font-family: system-ui, -apple-system, sans-serif;
+                padding-bottom: 52px;
+            }
+            html, body { margin: 0; padding: 0; width: 100%; box-sizing: border-box; }
+
+            .slate-accent { color: #38bdf8; }
+            .slate-accent-border { border-left-color: #38bdf8; }
+
+            .doc-body h1 { font-size: 1.4rem; font-weight: 700; margin: 1.5rem 0 0.5rem; }
+            .doc-body h2 { font-size: 0.9rem; font-weight: 700; margin: 1.5rem 0 0.4rem; text-transform: uppercase; letter-spacing: 0.1em; color: #38bdf8; border-left: 3px solid #38bdf8; padding-left: 0.75rem; }
+            .doc-body h3 { font-size: 0.9rem; font-weight: 600; margin: 1rem 0 0.3rem; color: #475569; }
+            .doc-body p  { margin: 0.75rem 0; line-height: 1.7; color: #1e293b; }
+            .doc-body ul, .doc-body ol { margin: 0.75rem 0 0.75rem 1.5rem; color: #1e293b; }
+            .doc-body li { margin-bottom: 0.25rem; line-height: 1.65; }
+            .doc-body blockquote { border-left: 3px solid #38bdf8; margin: 1rem 0; padding: 0.5rem 1rem; color: #475569; background: #f8fafc; }
+            .doc-body code { background: #f1f5f9; padding: 0.1em 0.35em; border-radius: 3px; font-size: 0.82em; font-family: ui-monospace, monospace; color: #0369a1; }
+            .doc-body pre  { background: #0f172a; color: #e2e8f0; padding: 1rem; border-radius: 6px; overflow-x: auto; margin: 1rem 0; }
+            .doc-body pre code { background: none; padding: 0; color: #e2e8f0; }
+            .doc-body table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.88em; }
+            .doc-body th { text-align: left; padding: 0.5rem 0.75rem; background: #0f172a; color: #e2e8f0; font-weight: 600; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; }
+            .doc-body td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #e2e8f0; color: #1e293b; }
+            .doc-body tr:nth-child(even) td { background: #f8fafc; }
+            .doc-body a  { color: #38bdf8; }
+            .doc-body hr { border: none; border-top: 1px solid #e2e8f0; margin: 1.5rem 0; }
+            .doc-body strong { font-weight: 700; }
+        </style>
+        {% if theme %}
+        <style>
+            .slate-accent { color: {{ theme.primary }} !important; }
+            .slate-accent-border { border-left-color: {{ theme.primary }} !important; }
+            .doc-body h2 { color: {{ theme.primary }} !important; border-left-color: {{ theme.primary }} !important; }
+            .doc-body blockquote { border-left-color: {{ theme.primary }} !important; }
+            .doc-body code { color: {{ theme.primary_dark }} !important; }
+            .doc-body a { color: {{ theme.primary }} !important; }
+        </style>
+        {% endif %}
+    </head>
+    <body class="bg-white">
+        <!-- Dark header band -->
+        <div style="
+            background: #0f172a;
+            padding: 44px 56px 36px;
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            box-sizing: border-box;
+        ">
+            <!-- Decorative circles -->
+            <div style="
+                position: absolute; top: -40px; right: -40px;
+                width: 220px; height: 220px; border-radius: 50%;
+                background: {% if theme %}{{ theme.primary_alpha_low }}{% else %}rgba(56, 189, 248, 0.06){% endif %};
+            "></div>
+            <div style="
+                position: absolute; top: 20px; right: 30px;
+                width: 100px; height: 100px; border-radius: 50%;
+                background: {% if theme %}{{ theme.primary_alpha_very_low }}{% else %}rgba(56, 189, 248, 0.04){% endif %};
+            "></div>
+
+            <div style="position: relative;">
+                <h1 style="color: #f8fafc; font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 0.6rem; line-height: 1.15;">
+                    {{ title | default(value="") }}
+                </h1>
+                <div style="display: flex; gap: 1.5rem; font-size: 0.75rem; flex-wrap: wrap;">
+                    {% if author %}
+                    <span class="slate-accent">{{ author }}</span>
+                    {% elif me and me.name %}
+                    <span class="slate-accent">{{ me.name }}</span>
+                    {% endif %}
+                    {% if date %}
+                    <span style="color: #94a3b8;">{{ date }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Body -->
+        <div style="padding: 40px 56px 36px;">
+            <div class="doc-body" style="font-size: 0.9rem;">
+                {{ body | safe }}
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="position: fixed; bottom: 0; left: 0; right: 0; background: #0f172a; padding: 10px 56px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.625rem; color: #475569; text-transform: uppercase; letter-spacing: 0.1em;">
+                {% if me and me.name %}{{ me.name }}{% if me.company %} · {{ me.company }}{% endif %}{% endif %}
+            </span>
+            {% if me and me.email %}
+            <span style="font-size: 0.625rem; color: #475569; text-transform: uppercase; letter-spacing: 0.1em;">{{ me.email }}</span>
+            {% endif %}
+        </div>
+    </body>
+</html>

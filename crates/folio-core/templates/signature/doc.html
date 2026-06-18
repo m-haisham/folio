@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>{{ title | default(value="Document") }}</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+            @page { margin: 0; }
+            @media print {
+                body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            }
+            @import url("https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap");
+            :root {
+                --ink:       #1c3325;
+                --ink-mid:   #3a6b4c;
+                --ink-muted: #4a6b59;
+                --ink-sub:   #6b8878;
+                --ink-faint: #8aaa9a;
+                --paper:     #fcfaf8;
+                --rule:      rgba(28, 51, 37, 0.1);
+                --rule-md:   rgba(28, 51, 37, 0.22);
+            }
+            html {
+                margin: 0; padding: 0; width: 100%;
+                min-height: 100vh; background: var(--paper);
+            }
+            body {
+                margin: 0; padding: 0; width: 100%;
+                min-height: 100vh; background: var(--paper);
+                color: var(--ink);
+                font-family: "Inter", system-ui, sans-serif;
+                font-weight: 300;
+                padding-bottom: 52px;
+                box-sizing: border-box;
+            }
+            .serif { font-family: "EB Garamond", Georgia, serif; }
+
+            .doc-body { font-family: "EB Garamond", Georgia, serif; font-size: 1rem; }
+            .doc-body h1 { font-family: "EB Garamond", serif; font-size: 1.5rem; font-weight: 500; font-style: italic; margin: 1.5rem 0 0.5rem; color: var(--ink); }
+            .doc-body h2 { font-family: "Inter", sans-serif; font-size: 0.72rem; font-weight: 600; margin: 1.75rem 0 0.6rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-sub); border-bottom: 1px solid var(--rule); padding-bottom: 0.4rem; }
+            .doc-body h3 { font-family: "EB Garamond", serif; font-size: 1.1rem; font-weight: 500; font-style: italic; margin: 1.25rem 0 0.3rem; color: var(--ink-mid); }
+            .doc-body p  { margin: 0.9rem 0; line-height: 1.85; }
+            .doc-body ul, .doc-body ol { margin: 0.8rem 0 0.8rem 1.5rem; }
+            .doc-body li { margin-bottom: 0.3rem; line-height: 1.8; }
+            .doc-body blockquote { border-left: 2px solid var(--ink-mid); margin: 1.25rem 0; padding: 0.5rem 1.25rem; color: var(--ink-muted); font-style: italic; }
+            .doc-body code { font-family: ui-monospace, monospace; background: rgba(28,51,37,0.06); padding: 0.1em 0.35em; border-radius: 3px; font-size: 0.82em; color: var(--ink); }
+            .doc-body pre  { background: rgba(28,51,37,0.05); border: 1px solid var(--rule-md); padding: 1rem; border-radius: 4px; overflow-x: auto; margin: 1rem 0; }
+            .doc-body pre code { background: none; padding: 0; }
+            .doc-body table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-family: "Inter", sans-serif; font-size: 0.82rem; }
+            .doc-body th { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--ink); font-weight: 600; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-sub); }
+            .doc-body td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--rule); color: var(--ink-muted); }
+            .doc-body a  { color: var(--ink-mid); }
+            .doc-body hr { border: none; border-top: 1px solid var(--rule-md); margin: 1.75rem 0; }
+            .doc-body strong { font-weight: 500; }
+        </style>
+        {% if theme %}
+        <style>
+            :root {
+                --ink:       {{ theme.primary }};
+                --ink-mid:   {{ theme.primary_mid }};
+                --ink-muted: {{ theme.primary_mid }};
+                --ink-sub:   {{ theme.primary_mid }};
+                --ink-faint: {{ theme.primary_mid }};
+            }
+        </style>
+        {% endif %}
+    </head>
+    <body>
+        <!-- Dark header band -->
+        <div style="
+            background: var(--ink);
+            color: var(--paper);
+            padding: 44px 60px 36px;
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            box-sizing: border-box;
+        ">
+            <!-- Decorative rule lines -->
+            <div style="position: absolute; top: 0; left: 0; right: 0; height: 2px; background: rgba(252,250,248,0.12);"></div>
+            <div style="position: absolute; top: 4px; left: 0; right: 0; height: 1px; background: rgba(252,250,248,0.06);"></div>
+
+            <div style="position: relative;">
+                <h1 class="serif" style="font-size: 2.25rem; font-weight: 500; font-style: italic; letter-spacing: 0.01em; margin: 0 0 0.75rem; line-height: 1.2; color: var(--paper);">
+                    {{ title | default(value="") }}
+                </h1>
+                <div style="display: flex; gap: 1.5rem; font-size: 0.72rem; font-family: 'Inter', sans-serif; font-weight: 300; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.65; flex-wrap: wrap;">
+                    {% if author %}
+                    <span>{{ author }}</span>
+                    {% elif me and me.name %}
+                    <span>{{ me.name }}</span>
+                    {% endif %}
+                    {% if date %}
+                    <span>{{ date }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Body -->
+        <div style="padding: 44px 60px 36px;">
+            <div class="doc-body">
+                {{ body | safe }}
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="position: fixed; bottom: 0; left: 0; right: 0; background: var(--paper); border-top: 1px solid var(--rule-md); padding: 10px 60px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.6rem; font-family: 'Inter', sans-serif; font-weight: 300; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-sub);">
+                {% if me and me.name %}{{ me.name }}{% if me.company %} · {{ me.company }}{% endif %}{% endif %}
+            </span>
+            {% if me and me.email %}
+            <span style="font-size: 0.6rem; font-family: 'Inter', sans-serif; font-weight: 300; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-sub);">{{ me.email }}</span>
+            {% endif %}
+        </div>
+    </body>
+</html>
+""

@@ -7,6 +7,7 @@ pub mod new;
 pub mod paid;
 pub mod preview;
 pub mod quote;
+pub mod render;
 pub mod send;
 pub mod summary;
 pub mod templates;

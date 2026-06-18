@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>{{ title | default(value="Document") }}</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+            @page { margin: 0; }
+            @media print {
+                body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            }
+            body {
+                font-family: Georgia, "Times New Roman", serif;
+                background: #fdf8f2;
+                color: #2d1f14;
+                padding-bottom: 52px;
+            }
+            html, body { margin: 0; padding: 0; width: 100%; box-sizing: border-box; }
+
+            .warm-dark  { color: #7c3516; }
+            .warm-mid   { color: #a0522d; }
+            .warm-rule  { border-color: #c8956c; }
+            .warm-bg    { background: #fdf0e0; }
+            .warm-deep  { background: #7c3516; }
+
+            .doc-body h1 { font-size: 1.4rem; font-weight: 700; margin: 1.5rem 0 0.5rem; color: #5a2310; }
+            .doc-body h2 { font-size: 1rem; font-weight: 700; margin: 1.4rem 0 0.4rem; color: #7c3516; border-bottom: 1px solid #d4a574; padding-bottom: 0.3rem; letter-spacing: 0.04em; }
+            .doc-body h3 { font-size: 0.95rem; font-weight: 700; margin: 1rem 0 0.3rem; color: #a0522d; }
+            .doc-body p  { margin: 0.8rem 0; line-height: 1.8; }
+            .doc-body ul, .doc-body ol { margin: 0.8rem 0 0.8rem 1.5rem; }
+            .doc-body li { margin-bottom: 0.3rem; line-height: 1.75; }
+            .doc-body blockquote { border-left: 3px solid #c8956c; margin: 1rem 0; padding: 0.5rem 1.25rem; color: #8b5e3c; background: #fdf0e0; font-style: italic; }
+            .doc-body code { background: #fdf0e0; padding: 0.1em 0.35em; border-radius: 3px; font-size: 0.82em; font-family: ui-monospace, monospace; color: #7c3516; }
+            .doc-body pre  { background: #fdf0e0; border: 1px solid #d4a574; padding: 1rem; border-radius: 4px; overflow-x: auto; margin: 1rem 0; }
+            .doc-body pre code { background: none; padding: 0; }
+            .doc-body table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9em; }
+            .doc-body th { text-align: left; padding: 0.5rem 0.75rem; background: #7c3516; color: #fdf8f2; font-weight: 700; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; }
+            .doc-body td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #e8d5c4; }
+            .doc-body tr:nth-child(even) td { background: #fdf0e0; }
+            .doc-body a  { color: #7c3516; }
+            .doc-body hr { border: none; border-top: 1px solid #d4a574; margin: 1.5rem 0; }
+            .doc-body strong { font-weight: 700; }
+        </style>
+        {% if theme %}
+        <style>
+            .warm-dark  { color: {{ theme.primary }} !important; }
+            .warm-mid   { color: {{ theme.primary_mid }} !important; }
+            .warm-rule  { border-color: {{ theme.primary_mid }} !important; }
+            .warm-bg    { background: {{ theme.primary_light }} !important; }
+            .warm-deep  { background: {{ theme.primary }} !important; }
+            .doc-body h1 { color: {{ theme.primary_dark }} !important; }
+            .doc-body h2 { color: {{ theme.primary }} !important; border-bottom-color: {{ theme.primary_mid }} !important; }
+            .doc-body h3 { color: {{ theme.primary_mid }} !important; }
+            .doc-body blockquote { border-left-color: {{ theme.primary_mid }} !important; background: {{ theme.primary_light }} !important; }
+            .doc-body code { background: {{ theme.primary_light }} !important; color: {{ theme.primary }} !important; }
+            .doc-body pre  { background: {{ theme.primary_light }} !important; border-color: {{ theme.primary_mid }} !important; }
+            .doc-body th { background: {{ theme.primary }} !important; }
+            .doc-body tr:nth-child(even) td { background: {{ theme.primary_light }} !important; }
+            .doc-body a { color: {{ theme.primary }} !important; }
+        </style>
+        {% endif %}
+    </head>
+    <body>
+        <!-- Warm decorative top bar -->
+        <div class="warm-deep" style="height: 5px; width: 100%;{% if theme %} background: {{ theme.primary }} !important;{% endif %}"></div>
+
+        <div style="padding: 48px 56px 36px;">
+            <!-- Title block -->
+            <div style="margin-bottom: 2.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid #d4a574;">
+                <h1 class="warm-dark" style="font-size: 2rem; font-weight: 700; letter-spacing: 0.02em; margin: 0 0 0.5rem; line-height: 1.2; font-style: italic;">
+                    {{ title | default(value="") }}
+                </h1>
+                <div style="display: flex; gap: 1.5rem; font-size: 0.8rem; color: #a0522d; flex-wrap: wrap;">
+                    {% if author %}
+                    <span>{{ author }}</span>
+                    {% elif me and me.name %}
+                    <span>{{ me.name }}</span>
+                    {% endif %}
+                    {% if date %}
+                    <span>{{ date }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Body -->
+            <div class="doc-body" style="font-size: 0.92rem;">
+                {{ body | safe }}
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="position: fixed; bottom: 0; left: 0; right: 0;">
+            <div class="warm-deep" style="height: 4px; width: 100%;{% if theme %} background: {{ theme.primary }} !important;{% endif %}"></div>
+            <div style="background: #fdf8f2; padding: 8px 56px; display: flex; justify-content: space-between; font-size: 0.65rem; color: #a0522d; text-transform: uppercase; letter-spacing: 0.08em;">
+                {% if me and me.name %}
+                <span>{{ me.name }}{% if me.company %} · {{ me.company }}{% endif %}</span>
+                {% else %}
+                <span></span>
+                {% endif %}
+                {% if me and me.email %}<span>{{ me.email }}</span>{% endif %}
+            </div>
+        </div>
+    </body>
+</html>
+</body>

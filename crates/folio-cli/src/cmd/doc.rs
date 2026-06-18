@@ -16,6 +16,7 @@ use folio_core::{
     config::{find_root, load_config},
     doc_store::{doc_output_path, doc_rel_path, documents_dir, list_all_docs, list_docs},
     markdown::parse_doc,
+    pdf::PdfMargins,
     pdf::html_to_pdf,
     store::FilesystemStore,
     templates::{get_doc_template_html, render_doc_html},
@@ -240,7 +241,7 @@ fn build_one(
         fs::create_dir_all(parent)?;
     }
 
-    html_to_pdf(&html, output_path).map_err(|e| eyre::eyre!("{}", e))?;
+    html_to_pdf(&html, output_path, PdfMargins::document()).map_err(|e| eyre::eyre!("{}", e))?;
 
     let rel = doc_rel_path(source, &store.clients_dir(), slug);
     println!("✓ {}/{} → {}", slug, rel.display(), output_path.display());

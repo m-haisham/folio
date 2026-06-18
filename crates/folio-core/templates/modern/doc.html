@@ -5,9 +5,6 @@
         <title>{{ title | default(value="Document") }}</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <style>
-            @page {
-                margin: 0;
-            }
             @media print {
                 body {
                     -webkit-print-color-adjust: exact;
@@ -15,16 +12,19 @@
                 }
             }
             @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap");
-            body {
-                font-family: "Inter", system-ui, sans-serif;
-            }
             html,
             body {
                 margin: 0;
                 padding: 0;
                 width: 100%;
-                padding-bottom: 64px;
+                background: #fff;
                 box-sizing: border-box;
+            }
+            body {
+                padding-bottom: 52px;
+                font-family: "Inter", system-ui, sans-serif;
+                color: #111827;
+                font-size: 0.875rem;
             }
 
             .accent {
@@ -32,9 +32,6 @@
             }
             .accent-text {
                 color: #7c3aed;
-            }
-            .accent-light {
-                background-color: #f5f3ff;
             }
 
             .doc-body h1 {
@@ -143,29 +140,28 @@
             .doc-body strong {
                 font-weight: 700;
             }
+
+            .doc-body h1, .doc-body h2, .doc-body h3 { break-after: avoid; page-break-after: avoid; }
+            .doc-body h1 + p, .doc-body h2 + p, .doc-body h3 + p,
+            .doc-body h1 + ul, .doc-body h2 + ul, .doc-body h3 + ul { break-before: avoid; page-break-before: avoid; }
         </style>
         {% if theme %}
         <style>
             .accent { background-color: {{ theme.primary }} !important; }
             .accent-text { color: {{ theme.primary }} !important; }
-            .accent-light { background-color: {{ theme.primary_light }} !important; }
             .doc-body h2 { color: {{ theme.primary }} !important; }
             .doc-body blockquote { border-left-color: {{ theme.primary }} !important; background: {{ theme.primary_light }} !important; }
             .doc-body code { background: {{ theme.primary_light }} !important; color: {{ theme.primary_dark }} !important; }
-            .doc-body pre  { background: #1e1b4b; }
             .doc-body th { background: {{ theme.primary }} !important; }
             .doc-body tr:nth-child(even) td { background: {{ theme.primary_light }} !important; }
             .doc-body a { color: {{ theme.primary }} !important; }
         </style>
         {% endif %}
     </head>
-    <body class="bg-white text-gray-900 text-sm">
-        <!-- Top accent stripe -->
+    <body>
         <div class="accent" style="height: 5px; width: 100%"></div>
-
-        <div style="padding: 72px 56px 56px">
-            <!-- Title block -->
-            <div style="margin-bottom: 2.5rem">
+        <div style="padding: 1.75rem 0 2rem">
+            <div style="margin-bottom: 2rem">
                 <h1
                     class="accent-text"
                     style="
@@ -188,17 +184,11 @@
                         flex-wrap: wrap;
                     "
                 >
-                    {% if author %}
-                    <span>{{ author }}</span>
-                    {% elif me and me.name %}
-                    <span>{{ me.name }}</span>
-                    {% endif %} {% if date %}
-                    <span>{{ date }}</span>
-                    {% endif %}
+                    {% if author %}<span>{{ author }}</span> {% elif me and
+                    me.name %}<span>{{ me.name }}</span>{% endif %} {% if date
+                    %}<span>{{ date }}</span>{% endif %}
                 </div>
             </div>
-
-            <!-- Body -->
             <div class="doc-body">{{ body | safe }}</div>
         </div>
 
@@ -209,7 +199,7 @@
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    padding: 8px 56px;
+                    padding: 8px 0;
                     background: #fff;
                     border-top: 1px solid #f3f4f6;
                     height: 41px;
@@ -220,14 +210,12 @@
                     letter-spacing: 0.1em;
                 "
             >
-                {% if me and me.name %}
-                <span
+                {% if me and me.name %}<span
                     >{{ me.name }}{% if me.company %} · {{ me.company }}{% endif
                     %}</span
                 >
-                {% else %}
-                <span></span>
-                {% endif %} {% if me and me.email %}<span>{{ me.email }}</span
+                {% else %}<span></span>{% endif %} {% if me and me.email %}<span
+                    >{{ me.email }}</span
                 >{% endif %}
             </div>
             <div class="accent" style="height: 3px; width: 100%"></div>

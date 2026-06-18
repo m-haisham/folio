@@ -11,6 +11,7 @@ use folio_core::{
     config::{find_root, load_config},
     email::{EmailMessage, send_email},
     index::{BuildIndex, PdfState, check_pdf_state, compute_source_hash},
+    pdf::PdfMargins,
     pdf::html_to_pdf,
     quote_compute::compute_quote,
     store::{ClientStore, FilesystemStore, InvoiceStore, QuoteStore},
@@ -384,7 +385,7 @@ pub async fn build_quote_one(
         .map_err(|e| eyre::eyre!("{}", e))?;
 
     fs::create_dir_all(output_path.parent().unwrap())?;
-    html_to_pdf(&html, &output_path).map_err(|e| eyre::eyre!("{}", e))?;
+    html_to_pdf(&html, &output_path, PdfMargins::none()).map_err(|e| eyre::eyre!("{}", e))?;
 
     index.record(id, &source_hash);
     println!("✓ Built {}", output_path.display());

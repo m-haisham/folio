@@ -5,40 +5,38 @@
         <title>{{ title | default(value="Document") }}</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <style>
-            @page {
-                margin: 0;
-            }
             @media print {
                 body {
                     -webkit-print-color-adjust: exact;
                     print-color-adjust: exact;
                 }
             }
-            body {
-                font-family: Georgia, "Times New Roman", serif;
-                background: #fff;
-                color: #1a1a1a;
-                padding-bottom: 64px;
-            }
             html,
             body {
                 margin: 0;
                 padding: 0;
                 width: 100%;
+                background: #fff;
                 box-sizing: border-box;
             }
+            body {
+                padding-bottom: 48px;
+                font-family: Georgia, "Times New Roman", serif;
+                color: #1a1a1a;
+                font-size: 0.9rem;
+            }
+
             .doc-body h1 {
                 font-size: 1.4rem;
                 font-weight: 700;
                 margin: 2.25rem 0 0.75rem;
             }
             .doc-body h2 {
-                font-size: 1.15rem;
+                font-size: 0.9rem;
                 font-weight: 700;
                 margin: 2rem 0 0.6rem;
                 text-transform: uppercase;
                 letter-spacing: 0.05em;
-                font-size: 0.9rem;
                 border-bottom: 1px solid #d1d5db;
                 padding-bottom: 0.3rem;
             }
@@ -127,18 +125,33 @@
             .doc-body strong {
                 font-weight: 700;
             }
+
+            .doc-body h1,
+            .doc-body h2,
+            .doc-body h3 {
+                break-after: avoid;
+                page-break-after: avoid;
+            }
+            .doc-body h1 + p,
+            .doc-body h2 + p,
+            .doc-body h3 + p,
+            .doc-body h1 + ul,
+            .doc-body h2 + ul,
+            .doc-body h3 + ul {
+                break-before: avoid;
+                page-break-before: avoid;
+            }
         </style>
     </head>
     <body>
-        <div style="padding: 72px 56px 0">
-            <!-- Ruled header -->
+        <div style="padding: 1.5rem 0 2rem">
             <div
                 style="
                 border-top: 4px solid {% if theme %}{{ theme.primary }}{% else %}#1a1a1a{% endif %};
-                padding-top: 20px;
-                padding-bottom: 16px;
+                padding-top: 1.25rem;
+                padding-bottom: 1rem;
                 border-bottom: 1.5px solid {% if theme %}{{ theme.primary }}{% else %}#1a1a1a{% endif %};
-                margin-bottom: 2.5rem;
+                margin-bottom: 2rem;
             "
             >
                 <h1
@@ -162,17 +175,11 @@
                         flex-wrap: wrap;
                     "
                 >
-                    {% if author %}
-                    <span>{{ author }}</span>
-                    {% elif me and me.name %}
-                    <span>{{ me.name }}</span>
-                    {% endif %} {% if date %}
-                    <span>{{ date }}</span>
-                    {% endif %}
+                    {% if author %}<span>{{ author }}</span> {% elif me and
+                    me.name %}<span>{{ me.name }}</span>{% endif %} {% if date
+                    %}<span>{{ date }}</span>{% endif %}
                 </div>
             </div>
-
-            <!-- Body -->
             <div class="doc-body" style="font-size: 0.92rem">
                 {{ body | safe }}
             </div>
@@ -185,21 +192,20 @@
                 bottom: 0;
                 left: 0;
                 right: 0;
-                padding: 10px 56px;
+                padding: 10px 0;
                 background: #fff;
             "
         >
             <div
                 style="border-top: 1.5px solid {% if theme %}{{ theme.primary }}{% else %}#1a1a1a{% endif %}; padding-top: 8px; display: flex; justify-content: space-between; font-size: 0.65rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.08em;"
             >
-                {% if me and me.name %}
-                <span
+                {% if me and me.name %}<span
                     >{{ me.name }}{% if me.company %} · {{ me.company }}{% endif
                     %}</span
                 >
-                {% else %}
-                <span></span>
-                {% endif %} {% if date %}<span>{{ date }}</span>{% endif %}
+                {% else %}<span></span>{% endif %} {% if date %}<span
+                    >{{ date }}</span
+                >{% endif %}
             </div>
         </div>
     </body>

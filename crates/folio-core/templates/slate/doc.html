@@ -5,41 +5,39 @@
         <title>{{ title | default(value="Document") }}</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <style>
-            @page {
-                margin: 0;
-            }
             @media print {
                 body {
                     -webkit-print-color-adjust: exact;
                     print-color-adjust: exact;
                 }
             }
-            body {
-                font-family:
-                    system-ui,
-                    -apple-system,
-                    sans-serif;
-                padding-bottom: 64px;
-            }
             html,
             body {
                 margin: 0;
                 padding: 0;
                 width: 100%;
+                background: #f8fafc;
                 box-sizing: border-box;
+            }
+            body {
+                padding-bottom: 52px;
+                font-family:
+                    system-ui,
+                    -apple-system,
+                    sans-serif;
+                color: #1e293b;
+                font-size: 0.875rem;
             }
 
             .slate-accent {
                 color: #38bdf8;
-            }
-            .slate-accent-border {
-                border-left-color: #38bdf8;
             }
 
             .doc-body h1 {
                 font-size: 1.4rem;
                 font-weight: 700;
                 margin: 2.25rem 0 0.75rem;
+                color: #0f172a;
             }
             .doc-body h2 {
                 font-size: 0.9rem;
@@ -88,7 +86,7 @@
                 margin: 1.5rem 0;
                 padding: 0.5rem 1rem;
                 color: #475569;
-                background: #f8fafc;
+                background: #fff;
             }
             .doc-body code {
                 background: #f1f5f9;
@@ -133,7 +131,7 @@
                 color: #1e293b;
             }
             .doc-body tr:nth-child(even) td {
-                background: #f8fafc;
+                background: #fff;
             }
             .doc-body a {
                 color: #38bdf8;
@@ -146,11 +144,14 @@
             .doc-body strong {
                 font-weight: 700;
             }
+
+            .doc-body h1, .doc-body h2, .doc-body h3 { break-after: avoid; page-break-after: avoid; }
+            .doc-body h1 + p, .doc-body h2 + p, .doc-body h3 + p,
+            .doc-body h1 + ul, .doc-body h2 + ul, .doc-body h3 + ul { break-before: avoid; page-break-before: avoid; }
         </style>
         {% if theme %}
         <style>
             .slate-accent { color: {{ theme.primary }} !important; }
-            .slate-accent-border { border-left-color: {{ theme.primary }} !important; }
             .doc-body h2 { color: {{ theme.primary }} !important; border-left-color: {{ theme.primary }} !important; }
             .doc-body blockquote { border-left-color: {{ theme.primary }} !important; }
             .doc-body code { color: {{ theme.primary_dark }} !important; }
@@ -158,42 +159,22 @@
         </style>
         {% endif %}
     </head>
-    <body class="bg-white">
-        <!-- Dark header band -->
-        <div
-            style="
-                background: #0f172a;
-                padding: 68px 56px 52px;
-                position: relative;
-                overflow: hidden;
-                width: 100%;
-                box-sizing: border-box;
-            "
-        >
-            <!-- Decorative circles -->
+    <body>
+        <div style="padding: 1.75rem 0 2rem">
             <div
                 style="
-                position: absolute; top: -40px; right: -40px;
-                width: 220px; height: 220px; border-radius: 50%;
-                background: {% if theme %}{{ theme.primary_alpha_low }}{% else %}rgba(56, 189, 248, 0.06){% endif %};
-            "
-            ></div>
-            <div
-                style="
-                position: absolute; top: 20px; right: 30px;
-                width: 100px; height: 100px; border-radius: 50%;
-                background: {% if theme %}{{ theme.primary_alpha_very_low }}{% else %}rgba(56, 189, 248, 0.04){% endif %};
-            "
-            ></div>
-
-            <div style="position: relative">
+                    margin-bottom: 2rem;
+                    padding-bottom: 1.25rem;
+                    border-bottom: 2px solid #0f172a;
+                "
+            >
                 <h1
                     style="
-                        color: #f8fafc;
+                        color: #0f172a;
                         font-size: 2rem;
                         font-weight: 800;
                         letter-spacing: -0.02em;
-                        margin: 0 0 0.6rem;
+                        margin: 0 0 0.5rem;
                         line-height: 1.15;
                     "
                 >
@@ -207,19 +188,16 @@
                         flex-wrap: wrap;
                     "
                 >
-                    {% if author %}
-                    <span class="slate-accent">{{ author }}</span>
-                    {% elif me and me.name %}
-                    <span class="slate-accent">{{ me.name }}</span>
-                    {% endif %} {% if date %}
-                    <span style="color: #94a3b8">{{ date }}</span>
-                    {% endif %}
+                    {% if author %}<span class="slate-accent"
+                        >{{ author }}</span
+                    >
+                    {% elif me and me.name %}<span class="slate-accent"
+                        >{{ me.name }}</span
+                    >{% endif %} {% if date %}<span style="color: #94a3b8"
+                        >{{ date }}</span
+                    >{% endif %}
                 </div>
             </div>
-        </div>
-
-        <!-- Body -->
-        <div style="padding: 56px 56px 56px">
             <div class="doc-body" style="font-size: 0.9rem">
                 {{ body | safe }}
             </div>
@@ -233,7 +211,7 @@
                 left: 0;
                 right: 0;
                 background: #0f172a;
-                padding: 10px 56px;
+                padding: 10px 0;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;

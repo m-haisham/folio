@@ -11,6 +11,7 @@ use folio_core::{
     compute::compute_invoice,
     config::{find_root, load_config},
     index::{BuildIndex, PdfState, check_pdf_state, compute_source_hash},
+    pdf::PdfMargins,
     pdf::html_to_pdf,
     store::{ClientStore, FilesystemStore, InvoiceStore},
     templates::{get_template_html, render_invoice_html},
@@ -168,7 +169,7 @@ pub async fn build_one(
 
     fs::create_dir_all(output_path.parent().unwrap())?;
 
-    html_to_pdf(&html, &output_path).map_err(|e| eyre::eyre!("{}", e))?;
+    html_to_pdf(&html, &output_path, PdfMargins::none()).map_err(|e| eyre::eyre!("{}", e))?;
 
     index.record(id, &source_hash);
     println!("✓ Built {}", output_path.display());

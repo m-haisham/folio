@@ -5,7 +5,42 @@ use std::path::Path;
 const A4_WIDTH_IN: f64 = 8.27;
 const A4_HEIGHT_IN: f64 = 11.69;
 
-pub fn html_to_pdf(html: &str, output_path: &Path) -> Result<()> {
+/// Page margins (in inches) passed to Chrome's PrintToPdf API.
+///
+/// Use `PdfMargins::none()` for templates that manage their own layout via
+/// internal CSS padding (invoices, quotes). Use `PdfMargins::document()` for
+/// Markdown documents where Chrome should provide standard whitespace margins.
+#[derive(Debug, Clone, Copy)]
+pub struct PdfMargins {
+    pub top: f64,
+    pub bottom: f64,
+    pub left: f64,
+    pub right: f64,
+}
+
+impl PdfMargins {
+    /// No margins — template owns all spacing (invoices, quotes).
+    pub fn none() -> Self {
+        Self {
+            top: 0.0,
+            bottom: 0.0,
+            left: 0.0,
+            right: 0.0,
+        }
+    }
+
+    /// Standard document margins: 0.75" top/bottom, 0.9" left/right.
+    pub fn document() -> Self {
+        Self {
+            top: 0.8,
+            bottom: 1.1,
+            left: 0.8,
+            right: 0.8,
+        }
+    }
+}
+
+pub fn html_to_pdf(html: &str, output_path: &Path, margins: PdfMargins) -> Result<()> {
     use headless_chrome::{Browser, LaunchOptions, types::PrintToPdfOptions};
     use std::fs;
 
@@ -41,6 +76,10 @@ pub fn html_to_pdf(html: &str, output_path: &Path) -> Result<()> {
         paper_width: Some(A4_WIDTH_IN),
         paper_height: Some(A4_HEIGHT_IN),
         print_background: Some(true),
+        margin_top: Some(margins.top),
+        margin_bottom: Some(margins.bottom),
+        margin_left: Some(margins.left),
+        margin_right: Some(margins.right),
         ..Default::default()
     };
 

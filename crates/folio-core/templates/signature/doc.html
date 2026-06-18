@@ -5,9 +5,6 @@
         <title>{{ title | default(value="Document") }}</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <style>
-            @page {
-                margin: 0;
-            }
             @media print {
                 body {
                     -webkit-print-color-adjust: exact;
@@ -20,30 +17,30 @@
                 --ink-mid: #3a6b4c;
                 --ink-muted: #4a6b59;
                 --ink-sub: #6b8878;
-                --ink-faint: #8aaa9a;
                 --paper: #fcfaf8;
                 --rule: rgba(28, 51, 37, 0.1);
                 --rule-md: rgba(28, 51, 37, 0.22);
             }
-            html {
-                margin: 0;
-                padding: 0;
-                width: 100%;
-                min-height: 100vh;
+
+            @page {
                 background: var(--paper);
             }
+
+            html,
             body {
                 margin: 0;
                 padding: 0;
                 width: 100%;
-                min-height: 100vh;
                 background: var(--paper);
+                box-sizing: border-box;
+            }
+            body {
+                padding-bottom: 52px;
                 color: var(--ink);
                 font-family: "Inter", system-ui, sans-serif;
                 font-weight: 300;
-                padding-bottom: 64px;
-                box-sizing: border-box;
             }
+
             .serif {
                 font-family: "EB Garamond", Georgia, serif;
             }
@@ -163,6 +160,10 @@
             .doc-body strong {
                 font-weight: 500;
             }
+
+            .doc-body h1, .doc-body h2, .doc-body h3 { break-after: avoid; page-break-after: avoid; }
+            .doc-body h1 + p, .doc-body h2 + p, .doc-body h3 + p,
+            .doc-body h1 + ul, .doc-body h2 + ul, .doc-body h3 + ul { break-before: avoid; page-break-before: avoid; }
         </style>
         {% if theme %}
         <style>
@@ -171,47 +172,20 @@
                 --ink-mid:   {{ theme.primary_mid }};
                 --ink-muted: {{ theme.primary_mid }};
                 --ink-sub:   {{ theme.primary_mid }};
-                --ink-faint: {{ theme.primary_mid }};
             }
         </style>
         {% endif %}
     </head>
     <body>
-        <!-- Dark header band -->
-        <div
-            style="
-                background: var(--ink);
-                color: var(--paper);
-                padding: 68px 60px 52px;
-                position: relative;
-                overflow: hidden;
-                width: 100%;
-                box-sizing: border-box;
-            "
-        >
-            <!-- Decorative rule lines -->
+        <div style="padding: 1.75rem 0 2rem">
+            <!-- Title block — clean, no dark band -->
             <div
                 style="
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    height: 2px;
-                    background: rgba(252, 250, 248, 0.12);
+                    margin-bottom: 2rem;
+                    padding-bottom: 1.25rem;
+                    border-bottom: 1px solid var(--rule-md);
                 "
-            ></div>
-            <div
-                style="
-                    position: absolute;
-                    top: 4px;
-                    left: 0;
-                    right: 0;
-                    height: 1px;
-                    background: rgba(252, 250, 248, 0.06);
-                "
-            ></div>
-
-            <div style="position: relative">
+            >
                 <h1
                     class="serif"
                     style="
@@ -219,9 +193,9 @@
                         font-weight: 500;
                         font-style: italic;
                         letter-spacing: 0.01em;
-                        margin: 0 0 0.75rem;
+                        margin: 0 0 0.6rem;
                         line-height: 1.2;
-                        color: var(--paper);
+                        color: var(--ink);
                     "
                 >
                     {{ title | default(value="") }}
@@ -235,23 +209,15 @@
                         font-weight: 300;
                         letter-spacing: 0.08em;
                         text-transform: uppercase;
-                        opacity: 0.65;
+                        color: var(--ink-sub);
                         flex-wrap: wrap;
                     "
                 >
-                    {% if author %}
-                    <span>{{ author }}</span>
-                    {% elif me and me.name %}
-                    <span>{{ me.name }}</span>
-                    {% endif %} {% if date %}
-                    <span>{{ date }}</span>
-                    {% endif %}
+                    {% if author %}<span>{{ author }}</span> {% elif me and
+                    me.name %}<span>{{ me.name }}</span>{% endif %} {% if date
+                    %}<span>{{ date }}</span>{% endif %}
                 </div>
             </div>
-        </div>
-
-        <!-- Body -->
-        <div style="padding: 68px 60px 56px">
             <div class="doc-body">{{ body | safe }}</div>
         </div>
 
@@ -264,7 +230,7 @@
                 right: 0;
                 background: var(--paper);
                 border-top: 1px solid var(--rule-md);
-                padding: 10px 60px;
+                padding: 10px 0;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
@@ -299,4 +265,3 @@
         </div>
     </body>
 </html>
-""

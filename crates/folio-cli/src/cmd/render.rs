@@ -11,6 +11,7 @@ use eyre::Result;
 use folio_core::{
     config::{find_root, load_config},
     markdown::parse_doc,
+    pdf::PdfMargins,
     pdf::html_to_pdf,
     store::FilesystemStore,
     templates::{get_doc_template_html, render_doc_html},
@@ -108,7 +109,7 @@ pub async fn run(args: RenderArgs) -> Result<()> {
         fs::create_dir_all(parent)?;
     }
 
-    html_to_pdf(&html, &output_path).map_err(|e| eyre::eyre!("{}", e))?;
+    html_to_pdf(&html, &output_path, PdfMargins::document()).map_err(|e| eyre::eyre!("{}", e))?;
     println!("✓ Rendered {}", output_path.display());
 
     if args.open {
